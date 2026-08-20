@@ -40,7 +40,7 @@ build:
 	$(BIN)/ubt-race-docs all --out $(DIST)
 
 models:
-	scripts/build-models.sh $(DIST)
+	$(BIN)/ubt-race-docs trophies --out $(DIST)
 
 clean:
 	rm -rf $(DIST) .pytest_cache .ruff_cache .mypy_cache
