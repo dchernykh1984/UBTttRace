@@ -158,3 +158,18 @@ def labelled_fill_line(
     canvas.restoreState()
     start = x + text_width(label, font, size) + gap
     fill_line(canvas, start, y, max(width - (start - x), 0))
+
+
+def captioned_fill_line(
+    canvas: Canvas,
+    x_center: float,
+    y: float,
+    width: float,
+    caption: str,
+    font: str,
+    size: float,
+    gap: float = 5,
+) -> None:
+    """Линейка для заполнения с мелкой подписью под ней."""
+    fill_line(canvas, x_center - width / 2, y, width)
+    centred_string(canvas, x_center, y - gap - size * 0.8, caption, font, size, GREY)
