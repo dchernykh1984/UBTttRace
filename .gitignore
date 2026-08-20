@@ -1,0 +1,19 @@
+# Сгенерированные документы: в репозитории хранится только код, PDF/XLSX/STL собирает CI
+dist/
+build/
+*.pdf
+*.xlsx
+*.stl
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv*/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# macOS
+.DS_Store
