@@ -29,7 +29,7 @@ ubt-race-docs = "ubt_race_docs.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-ubt_race_docs = ["assets/fonts/*.ttf", "assets/fonts/*.txt"]
+ubt_race_docs = ["assets/fonts/*.ttf", "assets/fonts/*.txt", "assets/models/*.scad"]
 
 [tool.ruff]
 line-length = 100
