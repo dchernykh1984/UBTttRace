@@ -59,3 +59,11 @@ def cap_height(font: str, size: float) -> float:
     register_fonts()
     face = pdfmetrics.getFont(font).face
     return float(face.capHeight) / 1000.0 * size
+
+
+def fit_size(text: str, font: str, width: float, max_size: float, min_size: float = 5.0) -> float:
+    """Наибольший кегль не больше `max_size`, при котором строка влезает в `width`."""
+    natural = text_width(text, font, max_size)
+    if natural <= width or natural == 0:
+        return max_size
+    return max(min_size, max_size * width / natural)
