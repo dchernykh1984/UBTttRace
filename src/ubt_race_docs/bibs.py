@@ -1,0 +1,178 @@
+"""Стартовые номера на подседельный штырь.
+
+Лист A4 кладётся горизонтально и разрезается вдоль пополам — получаются две
+полоски 297×105 мм, по одному номеру на полоску. Полоска серединой оборачивается
+вокруг подседельного штыря, хвосты склеиваются между собой чистыми сторонами.
+Номер печатается на каждом хвосте, поэтому читается и слева, и справа.
+
+Цифры сознательно растянуты по вертикали: ширину ограничивает длина хвоста
+(≈115 мм), а высоту полоски (105 мм) грех не использовать.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+
+from reportlab.lib.units import mm
+from reportlab.pdfgen.canvas import Canvas
+
+from .draw import GREY, centred_string, dashed_line, rotated_string, stretched_string
+from .fonts import NUMBER, SANS, cap_height, register_fonts, text_width
+from .race import RACE
+
+FIRST_BIB = 1
+LAST_BIB = 300
+
+HINT = "Стартовый номер · Старттық нөмір"
+FOLD_HINT = "линия сгиба · бүктеу сызығы"
+CUT_HINT = "линия разреза · қию сызығы"
+
+
+@dataclass(frozen=True, slots=True)
+class BibLayout:
+    """Геометрия полоски с номером."""
+
+    page_width: float = 297 * mm
+    page_height: float = 210 * mm
+    wrap_allowance: float = 25 * mm
+    """Половина обхвата штыря: столько бумаги съедает оборот вокруг него."""
+
+    outer_margin: float = 10 * mm
+    top_margin: float = 9 * mm
+    bottom_margin: float = 9 * mm
+    caption_size: float = 8
+    hint_size: float = 7
+    fold_hint_size: float = 6
+    max_stretch: float = 1.5
+    """Больше — цифры выглядят неестественно вытянутыми."""
+
+    @property
+    def strip_height(self) -> float:
+        return self.page_height / 2
+
+    @property
+    def center_x(self) -> float:
+        return self.page_width / 2
+
+    @property
+    def number_width(self) -> float:
+        """Ширина хвоста, в которую должен уместиться номер."""
+        return self.center_x - self.wrap_allowance - self.outer_margin
+
+    @property
+    def band_bottom(self) -> float:
+        """Низ зоны под цифры, от низа полоски."""
+        return self.bottom_margin + self.caption_size + 3 * mm
+
+    @property
+    def band_top(self) -> float:
+        """Верх зоны под цифры, от низа полоски."""
+        return self.strip_height - self.top_margin - self.hint_size - 3 * mm
+
+    @property
+    def band_height(self) -> float:
+        return self.band_top - self.band_bottom
+
+
+def number_font_size(layout: BibLayout, digits: int) -> float:
+    """Кегль, при котором самый широкий номер занимает всю ширину хвоста."""
+    if digits < 1:
+        raise ValueError("в номере должна быть хотя бы одна цифра")
+    reference = "8" * digits
+    return layout.number_width / text_width(reference, NUMBER, 1)
+
+
+def number_stretch(layout: BibLayout, font_size: float) -> float:
+    """Во сколько раз растянуть цифры по вертикали, чтобы заполнить полоску."""
+    return min(layout.max_stretch, layout.band_height / cap_height(NUMBER, font_size))
+
+
+def draw_strip(
+    canvas: Canvas,
+    number: int,
+    strip_bottom: float,
+    layout: BibLayout,
+    font_size: float,
+    stretch: float,
+) -> None:
+    """Нарисовать одну полоску: номер на обоих хвостах и линия сгиба."""
+    text = str(number)
+    digit_height = cap_height(NUMBER, font_size) * stretch
+    baseline = strip_bottom + layout.band_bottom + (layout.band_height - digit_height) / 2
+
+    left_center = layout.outer_margin + layout.number_width / 2
+    right_center = layout.page_width - layout.outer_margin - layout.number_width / 2
+    hint_baseline = strip_bottom + layout.strip_height - layout.top_margin - layout.hint_size
+    caption_baseline = strip_bottom + layout.bottom_margin
+    caption = f"{RACE.short_title} · {RACE.date_numeric}"
+
+    for center in (left_center, right_center):
+        centred_string(canvas, center, hint_baseline, HINT, SANS, layout.hint_size, GREY)
+        stretched_string(canvas, center, baseline, text, NUMBER, font_size, stretch)
+        centred_string(canvas, center, caption_baseline, caption, SANS, layout.caption_size, GREY)
+
+    dashed_line(
+        canvas,
+        layout.center_x,
+        strip_bottom + layout.bottom_margin,
+        layout.center_x,
+        strip_bottom + layout.strip_height - layout.top_margin,
+        dash=(3, 3),
+    )
+    rotated_string(
+        canvas,
+        layout.center_x + 2 * mm,
+        strip_bottom
+        + layout.strip_height / 2
+        - text_width(FOLD_HINT, SANS, layout.fold_hint_size) / 2,
+        FOLD_HINT,
+        SANS,
+        layout.fold_hint_size,
+    )
+
+
+def draw_cut_line(canvas: Canvas, layout: BibLayout) -> None:
+    """Линия, по которой лист режется вдоль на две полоски."""
+    y = layout.page_height / 2
+    dashed_line(canvas, 0, y, layout.page_width, y, dash=(6, 4), width=0.6)
+    canvas.saveState()
+    canvas.setFont(SANS, layout.fold_hint_size)
+    canvas.setFillColor(GREY)
+    canvas.drawString(layout.outer_margin, y + 2, CUT_HINT)
+    canvas.restoreState()
+
+
+def build_bibs(
+    output: Path,
+    first: int = FIRST_BIB,
+    last: int = LAST_BIB,
+    layout: BibLayout | None = None,
+) -> Path:
+    """Собрать PDF со стартовыми номерами `first`..`last` включительно."""
+    if first < 1:
+        raise ValueError(f"номера начинаются с 1, получено {first}")
+    if last < first:
+        raise ValueError(f"последний номер {last} меньше первого {first}")
+
+    register_fonts()
+    layout = layout or BibLayout()
+    font_size = number_font_size(layout, len(str(last)))
+    stretch = number_stretch(layout, font_size)
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    canvas = Canvas(str(output), pagesize=(layout.page_width, layout.page_height))
+    canvas.setTitle(f"Стартовые номера {first}–{last} · {RACE.short_title}")
+    canvas.setAuthor(RACE.organizer)
+    canvas.setSubject(RACE.title.ru)
+
+    numbers = list(range(first, last + 1))
+    for index in range(0, len(numbers), 2):
+        draw_cut_line(canvas, layout)
+        draw_strip(canvas, numbers[index], layout.strip_height, layout, font_size, stretch)
+        if index + 1 < len(numbers):
+            draw_strip(canvas, numbers[index + 1], 0, layout, font_size, stretch)
+        canvas.showPage()
+
+    canvas.save()
+    return output
