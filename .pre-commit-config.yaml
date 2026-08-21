@@ -1,0 +1,46 @@
+# Ставится через `make install`. Разово по всему репозиторию:
+#   uv run pre-commit run --all-files
+default_install_hook_types: [pre-commit, commit-msg]
+
+# Вшитые шрифты — чужой код, форматировать и править их нечего.
+# Заодно сюда попадает .uuid, который fontconfig кладёт рядом при сканировании.
+exclude: ^src/ubt_race_docs/assets/fonts/
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        # Вшитые шрифты DejaVu весят до 800 КБ — это норма.
+        args: [--maxkb=1024]
+      - id: check-merge-conflict
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: trailing-whitespace
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.4
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.2.0
+    hooks:
+      # От заголовков коммитов зависит версия релиза, поэтому проверяем их сразу.
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: uv run mypy
+        language: system
+        types: [python]
+        pass_filenames: false
