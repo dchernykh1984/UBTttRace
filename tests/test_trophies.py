@@ -1,11 +1,13 @@
 """Проверки модели кубка и параметров, которые уходят в openscad."""
 
+import re
 import shutil
 from pathlib import Path
 
 import pytest
 
 from ubt_race_docs import trophies
+from ubt_race_docs.fonts import SANS_BOLD, text_width
 from ubt_race_docs.race import CATEGORIES
 from ubt_race_docs.trophies import (
     MODEL_PATH,
@@ -15,6 +17,19 @@ from ubt_race_docs.trophies import (
     render,
     render_plan,
 )
+
+ASCENT = 0.7598
+"""Доля em, по которой OpenSCAD отмеряет `size` у текста в DejaVu."""
+
+METRICS_SLOP = 1.06
+"""Запас: метрики openscad и reportlab совпадают не до последней десятой."""
+
+
+def model_number(name: str) -> float:
+    """Числовой параметр модели — читаем прямо из .scad, чтобы не разъехалось."""
+    match = re.search(rf"^{name} = ([0-9.]+);", MODEL_PATH.read_text(encoding="utf-8"), re.M)
+    assert match is not None, f"в модели нет параметра {name}"
+    return float(match.group(1))
 
 
 def test_model_is_shipped_with_the_package() -> None:
@@ -78,3 +93,21 @@ def test_model_compiles_with_the_engraving(tmp_path: Path) -> None:
     csg = output.read_text(encoding="utf-8")
     assert "Мужчины · Ерлер" in csg
     assert "1 место · 1-орын" in csg
+
+
+def test_model_engraves_with_the_font_we_ship() -> None:
+    assert 'font_name = "DejaVu Sans' in MODEL_PATH.read_text(encoding="utf-8")
+
+
+def test_engraving_fits_the_flat_face_of_the_plinth() -> None:
+    # Гравировка режется по передней грани подставки; за скруглением углов
+    # буквы теряют глубину, поэтому строка должна укладываться в плоскую часть.
+    flat_half_width = model_number("base_width") / 2 - model_number("base_corner")
+    em = model_number("text_size") / ASCENT
+    for task in render_plan():
+        for name, line in task.definitions.items():
+            half = text_width(line, SANS_BOLD, em) / 2 * METRICS_SLOP
+            assert half <= flat_half_width, (
+                f"{name} = {line!r} шире плоской части подставки: "
+                f"{half:.1f} мм против {flat_half_width:.1f} мм"
+            )
