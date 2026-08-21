@@ -22,6 +22,7 @@ from pathlib import Path
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+from .brand import draw_logo
 from .draw import dashed_line, stretched_string
 from .fonts import NUMBER, cap_height, register_fonts, text_width
 from .race import RACE
@@ -42,6 +43,11 @@ class BibLayout:
     outer_margin: float = 8 * mm
     top_margin: float = 9 * mm
     bottom_margin: float = 9 * mm
+    logo_size: float = 24 * mm
+    """Логотип на сгибе: он ляжет прямо на подседельную трубу."""
+
+    logo_gap: float = 3 * mm
+
     max_stretch: float = 2.0
     """Растяжение по вертикали: оборот вокруг трубы съедает ширину, и высота —
     единственный способ вернуть цифрам размер. Больше — цифры выглядят
@@ -111,14 +117,19 @@ def draw_strip(
     for center in (left_center, right_center):
         stretched_string(canvas, center, baseline, text, NUMBER, font_size, stretch)
 
-    dashed_line(
-        canvas,
-        layout.center_x,
-        strip_bottom + layout.bottom_margin,
-        layout.center_x,
-        strip_bottom + layout.strip_height - layout.top_margin,
-        dash=(3, 3),
-    )
+    draw_fold(canvas, strip_bottom, layout)
+
+
+def draw_fold(canvas: Canvas, strip_bottom: float, layout: BibLayout) -> None:
+    """Линия сгиба с логотипом посередине — он окажется спереди на трубе."""
+    middle = strip_bottom + layout.strip_height / 2
+    half = layout.logo_size / 2 + layout.logo_gap
+    for start, end in (
+        (strip_bottom + layout.bottom_margin, middle - half),
+        (middle + half, strip_bottom + layout.strip_height - layout.top_margin),
+    ):
+        dashed_line(canvas, layout.center_x, start, layout.center_x, end, dash=(3, 3))
+    draw_logo(canvas, layout.center_x, middle, layout.logo_size)
 
 
 def draw_cut_line(canvas: Canvas, layout: BibLayout) -> None:
