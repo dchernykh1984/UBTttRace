@@ -17,16 +17,12 @@ from pathlib import Path
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from .draw import GREY, centred_string, dashed_line, rotated_string, stretched_string
-from .fonts import NUMBER, SANS, cap_height, register_fonts, text_width
+from .draw import dashed_line, stretched_string
+from .fonts import NUMBER, cap_height, register_fonts, text_width
 from .race import RACE
 
 FIRST_BIB = 1
 LAST_BIB = 300
-
-HINT = "Стартовый номер · Старттық нөмір"
-FOLD_HINT = "линия сгиба · бүктеу сызығы"
-CUT_HINT = "линия разреза · қию сызығы"
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,9 +37,6 @@ class BibLayout:
     outer_margin: float = 10 * mm
     top_margin: float = 9 * mm
     bottom_margin: float = 9 * mm
-    caption_size: float = 8
-    hint_size: float = 7
-    fold_hint_size: float = 6
     max_stretch: float = 1.5
     """Больше — цифры выглядят неестественно вытянутыми."""
 
@@ -63,12 +56,12 @@ class BibLayout:
     @property
     def band_bottom(self) -> float:
         """Низ зоны под цифры, от низа полоски."""
-        return self.bottom_margin + self.caption_size + 3 * mm
+        return self.bottom_margin
 
     @property
     def band_top(self) -> float:
         """Верх зоны под цифры, от низа полоски."""
-        return self.strip_height - self.top_margin - self.hint_size - 3 * mm
+        return self.strip_height - self.top_margin
 
     @property
     def band_height(self) -> float:
@@ -103,14 +96,9 @@ def draw_strip(
 
     left_center = layout.outer_margin + layout.number_width / 2
     right_center = layout.page_width - layout.outer_margin - layout.number_width / 2
-    hint_baseline = strip_bottom + layout.strip_height - layout.top_margin - layout.hint_size
-    caption_baseline = strip_bottom + layout.bottom_margin
-    caption = f"{RACE.short_title} · {RACE.date_numeric}"
 
     for center in (left_center, right_center):
-        centred_string(canvas, center, hint_baseline, HINT, SANS, layout.hint_size, GREY)
         stretched_string(canvas, center, baseline, text, NUMBER, font_size, stretch)
-        centred_string(canvas, center, caption_baseline, caption, SANS, layout.caption_size, GREY)
 
     dashed_line(
         canvas,
@@ -120,27 +108,12 @@ def draw_strip(
         strip_bottom + layout.strip_height - layout.top_margin,
         dash=(3, 3),
     )
-    rotated_string(
-        canvas,
-        layout.center_x + 2 * mm,
-        strip_bottom
-        + layout.strip_height / 2
-        - text_width(FOLD_HINT, SANS, layout.fold_hint_size) / 2,
-        FOLD_HINT,
-        SANS,
-        layout.fold_hint_size,
-    )
 
 
 def draw_cut_line(canvas: Canvas, layout: BibLayout) -> None:
     """Линия, по которой лист режется вдоль на две полоски."""
     y = layout.page_height / 2
     dashed_line(canvas, 0, y, layout.page_width, y, dash=(6, 4), width=0.6)
-    canvas.saveState()
-    canvas.setFont(SANS, layout.fold_hint_size)
-    canvas.setFillColor(GREY)
-    canvas.drawString(layout.outer_margin, y + 2, CUT_HINT)
-    canvas.restoreState()
 
 
 def build_bibs(

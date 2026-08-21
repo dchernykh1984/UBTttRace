@@ -34,12 +34,12 @@ def test_every_number_is_printed_twice(small_run: Path) -> None:
         assert lines.count(str(number)) == 2, f"номер {number} напечатан не дважды"
 
 
-def test_sheet_carries_the_race_and_the_cut_line(small_run: Path) -> None:
+def test_sheet_carries_nothing_but_the_numbers(small_run: Path) -> None:
+    # На номере не должно быть служебных подписей: он и так понятен,
+    # а лишний текст только мешает читать цифры с обочины.
     first_page = PdfReader(small_run).pages[0].extract_text()
-    assert "UBT TT · 04.10.2026" in first_page
-    assert "линия разреза" in first_page
-    assert "линия сгиба" in first_page
-    assert "Старттық нөмір" in first_page
+    for caption in ("Стартовый номер", "линия разреза", "линия сгиба", "04.10.2026"):
+        assert caption not in first_page
 
 
 def test_widest_number_fits_the_tail() -> None:
