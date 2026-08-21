@@ -10,6 +10,7 @@ from __future__ import annotations
 import csv
 import shutil
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
@@ -70,16 +71,15 @@ def test_row_count_is_validated(tmp_path: Path) -> None:
         build_workbook(tmp_path / "prizes.xlsx", rows=0)
 
 
-def fill_protocol(path: Path) -> None:
-    """Вставить протокол так, как это сделает судья: время строкой и секундами."""
+def fill_protocol(path: Path, render_time: Callable[[int], str | float]) -> None:
+    """Вставить протокол так, как это сделает судья."""
     book = load_workbook(path)
     sheet = book["Мужчины"]
     for index, (name, seconds) in enumerate(PROTOCOL):
         row = FIRST_DATA_ROW + index
         sheet[f"B{row}"] = 100 + index
         sheet[f"C{row}"] = name
-        clock = f"{seconds // 3600}:{seconds % 3600 // 60:02d}:{seconds % 60:02d}"
-        sheet[f"D{row}"] = clock if index % 2 == 0 else seconds
+        sheet[f"D{row}"] = render_time(seconds)
     sheet["B5"] = ENTRIES
     book.save(path)
 
@@ -108,11 +108,25 @@ def recalculate(path: Path, tmp_path: Path) -> list[list[str]]:
         return list(csv.reader(handle))
 
 
+TIME_FORMATS: dict[str, Callable[[int], str | float]] = {
+    # Как судья может вставить одно и то же время.
+    "чч:мм:сс": lambda s: f"{s // 3600}:{s % 3600 // 60:02d}:{s % 60:02d}",
+    "мм:сс": lambda s: f"{s // 60}:{s % 60:02d}",
+    "секунды": lambda s: s,
+    "доля суток": lambda s: s / 86400,
+    # Так «34:12» выглядит после того, как Excel прочитал его как 34 ч 12 мин.
+    "мм:сс числом": lambda s: s / 1440,
+}
+
+
 @pytest.mark.skipif(shutil.which("soffice") is None, reason="LibreOffice не установлен")
-def test_formulas_match_the_reference_calculation(workbook_path: Path, tmp_path: Path) -> None:
+@pytest.mark.parametrize("time_format", list(TIME_FORMATS), ids=list(TIME_FORMATS))
+def test_formulas_match_the_reference_calculation(
+    workbook_path: Path, tmp_path: Path, time_format: str
+) -> None:
     path = tmp_path / "filled.xlsx"
     shutil.copy(workbook_path, path)
-    fill_protocol(path)
+    fill_protocol(path, TIME_FORMATS[time_format])
     table = recalculate(path, tmp_path)
 
     expected = distribute(
@@ -124,6 +138,7 @@ def test_formulas_match_the_reference_calculation(workbook_path: Path, tmp_path:
         return int(text.replace("\xa0", "").replace(" ", "") or 0)
 
     rows = table[HEADER_ROW : HEADER_ROW + len(PROTOCOL)]
+    assert [money(row[4]) for row in rows] == [int(seconds) for _, seconds in PROTOCOL]
     assert [money(row[10]) for row in rows] == [payout.amount for payout in expected.payouts]
     assert [money(row[9]) for row in rows] == [int(payout.raw) for payout in expected.payouts]
     assert [row[8] == "1" for row in rows[:-1]] == [step.funded for step in expected.steps]
