@@ -62,8 +62,12 @@ make kit       # то же самое плюс STL кубков (нужен open
 ```bash
 uv run ubt-race-docs bibs --first 1 --last 500 --out dist
 uv run ubt-race-docs certificates --spare 5 --out dist
+uv run ubt-race-docs certificates --background ~/Pictures/фон.png --out dist
 uv run ubt-race-docs --help
 ```
+
+Фон грамоты меняется и без ключа: положите картинку A4 в
+[assets/backgrounds/](src/ubt_race_docs/assets/backgrounds/) — она подхватится сама.
 
 ## Разработка
 
@@ -92,7 +96,11 @@ src/ubt_race_docs/
     workbook.py        книга Excel с живыми формулами
     trophies.py        запуск openscad для кубков
     cli.py             командная строка
+    background.py      фон печатного листа
+    brand.py           цвета команды и логотип
     assets/fonts/      DejaVu — кириллица и казахские буквы
+    assets/images/     логотип UBT
+    assets/backgrounds/ сюда кладётся своя картинка под грамоту
     assets/models/     trophy.scad — параметрическая модель кубка
 tests/                 тесты
 docs/                  инструкции по печати и сборке
