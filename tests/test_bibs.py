@@ -141,3 +141,18 @@ def test_qr_modules_stay_printable() -> None:
     # Модуль мельче 0.5 мм телефон уже читает плохо.
     modules = 33
     assert BibLayout().qr_size / modules > 0.5 * (72 / 25.4)
+
+
+def test_wordmark_sits_the_same_way_on_both_tails(small_run: Path) -> None:
+    # Хвосты склеиваются спина к спине: марка должна оказаться на одном
+    # расстоянии от сгиба с обеих сторон, иначе половинки не совпадут.
+    layout = BibLayout()
+    wordmark_width = layout.number_width - layout.qr_size - layout.footer_gap
+
+    left_tail = layout.outer_margin
+    left_center = left_tail + layout.qr_size + layout.footer_gap + wordmark_width / 2
+
+    right_tail = layout.page_width - layout.outer_margin - layout.number_width
+    right_center = right_tail + wordmark_width / 2
+
+    assert layout.center_x - left_center == pytest.approx(right_center - layout.center_x)

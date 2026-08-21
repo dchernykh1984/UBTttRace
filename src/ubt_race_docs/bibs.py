@@ -137,14 +137,19 @@ def draw_tail_footer(
 ) -> None:
     """Подвал хвоста: QR у дальнего от сгиба края и марка гонки рядом с ним."""
     far_side_is_right = tail_left > layout.center_x
-    qr_x = tail_left + layout.number_width - layout.qr_size if far_side_is_right else tail_left
-    qr_code(canvas, qr_x, strip_bottom + layout.bottom_margin, layout.qr_size, RACE.url)
-
-    wordmark_left = tail_left + layout.qr_size if far_side_is_right is False else tail_left
     wordmark_width = layout.number_width - layout.qr_size - layout.footer_gap
+
+    if far_side_is_right:
+        qr_x = tail_left + layout.number_width - layout.qr_size
+        wordmark_left = tail_left
+    else:
+        qr_x = tail_left
+        wordmark_left = tail_left + layout.qr_size + layout.footer_gap
+
+    qr_code(canvas, qr_x, strip_bottom + layout.bottom_margin, layout.qr_size, RACE.url)
     centred_string(
         canvas,
-        wordmark_left + layout.footer_gap + wordmark_width / 2,
+        wordmark_left + wordmark_width / 2,
         strip_bottom + layout.bottom_margin + (layout.qr_size - layout.wordmark_size) / 2,
         RACE.short_title,
         SANS_BOLD,
