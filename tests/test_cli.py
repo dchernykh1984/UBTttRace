@@ -1,5 +1,6 @@
 """Проверки командной строки."""
 
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -65,3 +66,27 @@ def test_command_is_required(capsys: pytest.CaptureFixture[str]) -> None:
     with pytest.raises(SystemExit) as exit_info:
         main([])
     assert exit_info.value.code == 2
+
+
+def test_openscad_timeout_is_reported(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def timeout(*_args: object, **_kwargs: object) -> None:
+        raise subprocess.TimeoutExpired(cmd="openscad", timeout=900)
+
+    monkeypatch.setattr(trophies.subprocess, "run", timeout)
+    monkeypatch.setattr(trophies, "openscad_executable", lambda: "/usr/bin/openscad")
+    assert main(["trophies", "--out", str(tmp_path)]) == 4
+    assert "openscad не отработал" in capsys.readouterr().out
+
+
+def test_openscad_failure_is_reported(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def failure(*_args: object, **_kwargs: object) -> None:
+        raise subprocess.CalledProcessError(1, "openscad", stderr=b"ERROR: Assertion failed")
+
+    monkeypatch.setattr(trophies.subprocess, "run", failure)
+    monkeypatch.setattr(trophies, "openscad_executable", lambda: "/usr/bin/openscad")
+    assert main(["trophies", "--out", str(tmp_path)]) == 4
+    assert "Assertion failed" in capsys.readouterr().out
