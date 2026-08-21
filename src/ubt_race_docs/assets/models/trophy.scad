@@ -16,14 +16,17 @@ title_line = "UBT TT · 04.10.2026";
 place_line = "1 место · 1-орын";
 category_line = "Мужчины · Ерлер";
 font_name = "DejaVu Sans:style=Bold";
-text_size = 4.4;
+// Гравировка ложится на плоскую часть передней грани — это
+// base_width - 2 * base_corner. Ширину строки OpenSCAD измерять не умеет,
+// поэтому её стережёт тест test_engraving_fits_the_flat_face_of_the_plinth.
+text_size = 4.0;
 text_depth = 0.8;
 text_step = 6.5;
 
 /* [Подставка] */
-base_width = 86;
+base_width = 96;
 base_height = 26;
-base_corner = 9;
+base_corner = 10;
 base_taper = 4;
 
 /* [Стойка] */
