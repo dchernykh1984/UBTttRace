@@ -36,6 +36,7 @@ cup_height = 56;
 cup_bottom_radius = 12;
 cup_top_radius = 36;
 cup_wall = 4;
+cup_rim = 4;
 cup_floor = 6;
 handle_major_radius = 10;
 handle_minor_radius = 3.4;
@@ -81,19 +82,31 @@ module stem() {
     cylinder(r1 = stem_bottom_radius, r2 = stem_top_radius, h = stem_height);
 }
 
-module cup_body() {
-    inner_top = cup_top_radius - cup_wall;
-    inner_bottom = cup_bottom_radius - cup_wall + 1;
+// Внешняя форма чаши, ещё без полости.
+module cup_shell() {
     rotate_extrude()
         polygon(points = [
-            [cup_bottom_radius, 0],
-            [cup_top_radius, cup_height - 4],
-            [cup_top_radius, cup_height],
-            [inner_top, cup_height],
-            [inner_bottom, cup_floor],
-            [0, cup_floor],
             [0, 0],
+            [cup_bottom_radius, 0],
+            [cup_top_radius, cup_height - cup_rim],
+            [cup_top_radius, cup_height],
+            [0, cup_height],
         ]);
+}
+
+// Полость чаши. Вычитается уже после того, как приделаны ручки, — иначе
+// внутренняя половина каждого кольца остаётся торчать внутри чаши.
+module cup_cavity() {
+    inner_top = cup_top_radius - cup_wall;
+    inner_bottom = cup_bottom_radius - cup_wall + 1;
+    translate([0, 0, cup_floor])
+        rotate_extrude()
+            polygon(points = [
+                [0, 0],
+                [inner_bottom, 0],
+                [inner_top, cup_height - cup_floor],
+                [0, cup_height - cup_floor],
+            ]);
 }
 
 module handle() {
@@ -105,15 +118,19 @@ module handle() {
 
 module handles() {
     z = cup_height * handle_height_fraction;
-    radius_at_z = cup_bottom_radius + (cup_top_radius - cup_bottom_radius) * z / (cup_height - 4);
+    radius_at_z =
+        cup_bottom_radius + (cup_top_radius - cup_bottom_radius) * z / (cup_height - cup_rim);
     for (side = [-1, 1])
         translate([side * radius_at_z, 0, z]) handle();
 }
 
 module cup() {
-    union() {
-        cup_body();
-        handles();
+    difference() {
+        union() {
+            cup_shell();
+            handles();
+        }
+        cup_cavity();
     }
 }
 
