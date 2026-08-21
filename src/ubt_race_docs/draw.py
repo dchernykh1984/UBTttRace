@@ -114,27 +114,6 @@ def dashed_line(
     canvas.restoreState()
 
 
-def rotated_string(
-    canvas: Canvas,
-    x: float,
-    y: float,
-    text: str,
-    font: str,
-    size: float,
-    angle: float = 90,
-    colour: colors.Color = GREY,
-) -> None:
-    """Строка, повёрнутая на `angle` градусов вокруг точки (x, y)."""
-    register_fonts()
-    canvas.saveState()
-    canvas.translate(x, y)
-    canvas.rotate(angle)
-    canvas.setFont(font, size)
-    canvas.setFillColor(colour)
-    canvas.drawString(0, 0, text)
-    canvas.restoreState()
-
-
 def fill_line(
     canvas: Canvas,
     x: float,
