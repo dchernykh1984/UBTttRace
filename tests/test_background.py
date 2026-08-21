@@ -2,14 +2,18 @@
 
 from pathlib import Path
 
+import pytest
 from pypdf import PdfReader
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
+from ubt_race_docs import background
 from ubt_race_docs.background import (
+    BACKGROUND_NAMES,
     BackgroundStyle,
     draw_background,
     draw_branded_background,
+    resolve_image,
 )
 from ubt_race_docs.brand import LOGO_PATH
 
@@ -60,3 +64,28 @@ def test_background_draws_something(tmp_path: Path) -> None:
     canvas.save()
 
     assert filled.stat().st_size > empty.stat().st_size
+
+
+def test_no_image_by_default() -> None:
+    assert resolve_image() is None
+
+
+def test_explicit_image_wins(tmp_path: Path) -> None:
+    picture = tmp_path / "фон.png"
+    picture.write_bytes(LOGO_PATH.read_bytes())
+    assert resolve_image(picture) == picture
+
+
+def test_missing_image_is_reported(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="нет файла фона"):
+        resolve_image(tmp_path / "нет-такого.png")
+
+
+def test_image_dropped_into_the_assets_is_picked_up(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(background, "BACKGROUND_DIR", tmp_path)
+    assert resolve_image() is None
+    dropped = tmp_path / BACKGROUND_NAMES[0]
+    dropped.write_bytes(LOGO_PATH.read_bytes())
+    assert resolve_image() == dropped

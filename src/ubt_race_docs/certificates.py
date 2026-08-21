@@ -14,7 +14,7 @@ from pathlib import Path
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from .background import draw_background
+from .background import draw_background, resolve_image
 from .brand import INK, MUTED, ORANGE
 from .draw import captioned_fill_line, centred_block, centred_string, fill_line
 from .fonts import SANS, SANS_BOLD, TITLE, register_fonts
@@ -64,10 +64,11 @@ def draw_certificate(
     layout: CertificateLayout,
     category: Category | None = None,
     place: int | None = None,
+    background: Path | None = None,
 ) -> None:
     """Нарисовать одну грамоту. Пустые `category` и `place` — запасной бланк."""
     center = layout.page_width / 2
-    draw_background(canvas, layout.page_width, layout.page_height)
+    draw_background(canvas, layout.page_width, layout.page_height, image=background)
 
     centred_string(canvas, center, layout.top(layout.heading_y), HEADING, TITLE, 44, INK)
     fill_line(
@@ -165,13 +166,18 @@ def build_certificates(
     output: Path,
     spare: int = SPARE_CERTIFICATES,
     layout: CertificateLayout | None = None,
+    background: Path | None = None,
 ) -> Path:
-    """Собрать PDF: заполненные грамоты для призёров плюс `spare` пустых бланков."""
+    """Собрать PDF: заполненные грамоты для призёров плюс `spare` пустых бланков.
+
+    `background` — своя картинка на весь лист вместо нарисованного фона.
+    """
     if spare < 0:
         raise ValueError(f"запасных бланков не может быть меньше нуля, получено {spare}")
 
     register_fonts()
     layout = layout or CertificateLayout()
+    image = resolve_image(background)
 
     output.parent.mkdir(parents=True, exist_ok=True)
     canvas = Canvas(str(output), pagesize=(layout.page_width, layout.page_height))
@@ -181,11 +187,11 @@ def build_certificates(
 
     for category in CATEGORIES:
         for place in AWARDED_PLACES:
-            draw_certificate(canvas, layout, category, place)
+            draw_certificate(canvas, layout, category, place, background=image)
             canvas.showPage()
 
     for _ in range(spare):
-        draw_certificate(canvas, layout)
+        draw_certificate(canvas, layout, background=image)
         canvas.showPage()
 
     canvas.save()

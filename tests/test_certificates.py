@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from PIL import Image
 from pypdf import PdfReader
 
 from ubt_race_docs.certificates import SPARE_CERTIFICATES, build_certificates
@@ -79,3 +80,20 @@ def test_spares_can_be_switched_off(tmp_path: Path) -> None:
 def test_negative_spare_count_is_rejected(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="меньше нуля"):
         build_certificates(tmp_path / "certificates.pdf", spare=-1)
+
+
+def test_own_picture_replaces_the_drawn_background(tmp_path: Path) -> None:
+    picture = tmp_path / "фон.png"
+    Image.new("RGB", (400, 560), "white").save(picture)
+
+    output = build_certificates(tmp_path / "certificates.pdf", spare=0, background=picture)
+    images = PdfReader(output).pages[0].images
+    assert len(images) == 1, "поверх своей картинки водяной знак уже не нужен"
+    embedded = images[0].image
+    assert embedded is not None
+    assert embedded.size == (400, 560)
+
+
+def test_missing_background_is_reported(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="нет файла фона"):
+        build_certificates(tmp_path / "certificates.pdf", background=tmp_path / "нет.png")
