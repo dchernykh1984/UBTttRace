@@ -16,6 +16,7 @@ from ubt_race_docs.trophies import (
     openscad_executable,
     render,
     render_plan,
+    scad_string,
 )
 
 ASCENT = 0.7598
@@ -111,3 +112,15 @@ def test_engraving_fits_the_flat_face_of_the_plinth() -> None:
                 f"{name} = {line!r} шире плоской части подставки: "
                 f"{half:.1f} мм против {flat_half_width:.1f} мм"
             )
+
+
+def test_captions_with_quotes_stay_valid_openscad() -> None:
+    assert scad_string("1 место") == '"1 место"'
+    assert scad_string('кубок "UBT"') == '"кубок \\"UBT\\""'
+    assert scad_string("путь\\сюда") == '"путь\\\\сюда"'
+
+
+def test_command_escapes_the_caption(tmp_path: Path) -> None:
+    task = RenderTask("trophy.stl", "base", {"place_line": '1 "место"'}, "тест")
+    command = openscad_command(tmp_path / "trophy.stl", task)
+    assert 'place_line="1 \\"место\\""' in command

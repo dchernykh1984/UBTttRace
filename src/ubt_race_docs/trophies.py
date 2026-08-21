@@ -86,6 +86,16 @@ def render_plan() -> tuple[RenderTask, ...]:
     return tuple(tasks)
 
 
+def scad_string(value: str) -> str:
+    """Строковый литерал OpenSCAD.
+
+    Надписи задаются в `race.py` руками, и кавычка или обратный слеш в них
+    превратили бы `-D` в синтаксически битый кусок модели.
+    """
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
 def openscad_command(
     output: Path,
     task: RenderTask,
@@ -95,7 +105,7 @@ def openscad_command(
     """Командная строка openscad для одной нарезки."""
     command = [executable, "-o", str(output)]
     for name, value in {"part": task.part, **task.definitions}.items():
-        command += ["-D", f'{name}="{value}"']
+        command += ["-D", f"{name}={scad_string(value)}"]
     command.append(str(model))
     return command
 
