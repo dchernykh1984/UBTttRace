@@ -18,7 +18,18 @@ from openpyxl import load_workbook
 
 from ubt_race_docs.prizes import Result, distribute, fund_from_entries
 from ubt_race_docs.race import RACE
-from ubt_race_docs.workbook import FIRST_DATA_ROW, HEADER_ROW, build_workbook
+from ubt_race_docs.workbook import (
+    ENTRIES_CELL,
+    ENTRY_FEE_CELL,
+    FIRST_DATA_ROW,
+    FUND_CELL,
+    HEADER_ROW,
+    PAID_CELL,
+    REMAINDER_CELL,
+    ROUNDING_CELL,
+    SECOND_PRICE_CELL,
+    build_workbook,
+)
 
 PROTOCOL: tuple[tuple[str, int], ...] = (
     ("Гонщик 1", 2052),
@@ -44,10 +55,21 @@ def test_one_sheet_per_category_plus_instructions(workbook_path: Path) -> None:
 
 def test_parameters_come_from_the_regulations(workbook_path: Path) -> None:
     sheet = load_workbook(workbook_path)["Мужчины"]
-    assert sheet["B4"].value == RACE.prizes.entry_fee
-    assert sheet["B7"].value == RACE.prizes.tenge_per_second
-    assert sheet["B8"].value == RACE.prizes.payout_step
-    assert sheet["B6"].value == "=$B$4*$B$5"
+    assert sheet[ENTRY_FEE_CELL].value == RACE.prizes.entry_fee
+    assert sheet[SECOND_PRICE_CELL].value == RACE.prizes.tenge_per_second
+    assert sheet[ROUNDING_CELL].value == RACE.prizes.payout_step
+    assert sheet[FUND_CELL].value == "=$D$4*$D$5"
+
+
+def test_parameter_labels_are_not_squeezed_into_a_narrow_column(workbook_path: Path) -> None:
+    sheet = load_workbook(workbook_path)["Мужчины"]
+    merges = {str(merged) for merged in sheet.merged_cells.ranges}
+    for value_cell, label in ((ENTRY_FEE_CELL, "Стартовый взнос, ₸"),):
+        row = value_cell[1:]
+        assert f"A{row}:C{row}" in merges
+        assert sheet[f"A{row}"].value == label
+    span = sum(sheet.column_dimensions[letter].width for letter in "ABC")
+    assert span > max(len(label) for _, label in ((ENTRY_FEE_CELL, "Оплатило взносов, чел."),))
 
 
 def test_protocol_columns_are_marked_as_input(workbook_path: Path) -> None:
@@ -62,7 +84,7 @@ def test_protocol_columns_are_marked_as_input(workbook_path: Path) -> None:
 def test_every_row_of_the_table_has_formulas(workbook_path: Path) -> None:
     sheet = load_workbook(workbook_path)["Мужчины"]
     for row in (FIRST_DATA_ROW, FIRST_DATA_ROW + 25, HEADER_ROW + 50):
-        assert sheet[f"K{row}"].value == f'=IF($J{row}="","",FLOOR($J{row},$B$8))'
+        assert sheet[f"K{row}"].value == f'=IF($J{row}="","",FLOOR($J{row},$D$8))'
         assert "SUMIFS" in sheet[f"J{row}"].value
 
 
@@ -80,7 +102,7 @@ def fill_protocol(path: Path, render_time: Callable[[int], str | float]) -> None
         sheet[f"B{row}"] = 100 + index
         sheet[f"C{row}"] = name
         sheet[f"D{row}"] = render_time(seconds)
-    sheet["B5"] = ENTRIES
+    sheet[ENTRIES_CELL] = ENTRIES
     book.save(path)
 
 
@@ -106,6 +128,17 @@ def recalculate(path: Path, tmp_path: Path) -> list[list[str]]:
     exported = outdir / f"{path.stem}-Мужчины.csv"
     with exported.open(encoding="utf-8", newline="") as handle:
         return list(csv.reader(handle))
+
+
+def cell(table: list[list[str]], address: str) -> str:
+    """Значение ячейки по её адресу вида «I4» в выгруженной таблице."""
+    column = ord(address[0]) - ord("A")
+    return table[int(address[1:]) - 1][column]
+
+
+def money(text: str) -> int:
+    """Число из ячейки: LibreOffice печатает разряды через пробел."""
+    return int(text.replace("\xa0", "").replace(" ", "") or 0)
 
 
 TIME_FORMATS: dict[str, Callable[[int], str | float]] = {
@@ -134,14 +167,11 @@ def test_formulas_match_the_reference_calculation(
         fund_from_entries(ENTRIES),
     )
 
-    def money(text: str) -> int:
-        return int(text.replace("\xa0", "").replace(" ", "") or 0)
-
     rows = table[HEADER_ROW : HEADER_ROW + len(PROTOCOL)]
     assert [money(row[4]) for row in rows] == [int(seconds) for _, seconds in PROTOCOL]
     assert [money(row[10]) for row in rows] == [payout.amount for payout in expected.payouts]
     assert [money(row[9]) for row in rows] == [int(payout.raw) for payout in expected.payouts]
     assert [row[8] == "1" for row in rows[:-1]] == [step.funded for step in expected.steps]
-    assert money(table[3][4]) == expected.total_paid
-    assert money(table[4][4]) == expected.remainder
-    assert money(table[5][1]) == expected.fund
+    assert money(cell(table, PAID_CELL)) == expected.total_paid
+    assert money(cell(table, REMAINDER_CELL)) == expected.remainder
+    assert money(cell(table, FUND_CELL)) == expected.fund
