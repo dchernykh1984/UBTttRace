@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ubt-race-docs"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Генератор печатных документов гонки UBT TT (номера, грамоты, расписки, призовые)"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,6 +25,13 @@ dev = [
     "pytest>=8.2",
     "ruff>=0.6",
 ]
+
+# Версия проекта живёт в одном месте — в `__init__.py`. Если держать её здесь,
+# релизный PR правит pyproject, а `uv.lock` остаётся со старой версией, и
+# `uv sync --locked` в CI падает. При dynamic-версии uv не пишет её в лок,
+# а release-please сам пропускает pyproject и правит `__init__.py`.
+[tool.setuptools.dynamic]
+version = { attr = "ubt_race_docs.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
