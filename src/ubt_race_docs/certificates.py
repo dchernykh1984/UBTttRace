@@ -175,7 +175,7 @@ def draw_certificate(
         canvas,
         center,
         layout.top(layout.footer_y),
-        (RACE.organizer, RACE.url),
+        (RACE.organizer, RACE.site_url),
         SANS,
         8.5,
         11,
