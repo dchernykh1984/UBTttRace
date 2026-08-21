@@ -28,15 +28,49 @@
 - Python 3.11+
 - [OpenSCAD](https://openscad.org/) — только для сборки STL-моделей кубков
 
-## Быстрый старт
+## Собрать всё локально
+
+Один раз ставим зависимости:
 
 ```bash
-make install     # venv + зависимости
+make install
+```
+
+Дальше собираем что нужно — результат всегда складывается в папку `dist/`
+внутри проекта (она в `.gitignore`, в репозиторий ничего не попадает):
+
+```bash
+make build     # все документы сразу: номера, грамоты, расписки, таблица призовых
+make kit       # то же самое плюс STL кубков (нужен openscad)
+```
+
+По одному документу:
+
+| Команда | Что появится в `dist/` |
+|---|---|
+| `make bibs` | `bib-numbers-1-300.pdf` |
+| `make certificates` | `certificates.pdf` |
+| `make waivers` | `waiver-adult.pdf`, `waiver-minor.pdf` |
+| `make workbook` | `prize-money.xlsx` |
+| `make models` | `trophy-*.stl` (нужен openscad) |
+
+`make clean` удаляет `dist/` и кэши.
+
+Если нужны нестандартные параметры — та же программа доступна напрямую,
+`--help` покажет всё:
+
+```bash
+.venv/bin/ubt-race-docs bibs --first 1 --last 500 --out dist
+.venv/bin/ubt-race-docs certificates --spare 5 --out dist
+.venv/bin/ubt-race-docs --help
+```
+
+## Разработка
+
+```bash
 make lint        # ruff check + ruff format --check
 make typecheck   # mypy
 make test        # pytest
-make build       # PDF и XLSX в dist/
-make models      # STL кубков в dist/ (нужен openscad)
 ```
 
 ## Структура
