@@ -100,3 +100,11 @@ def test_single_number_still_makes_a_sheet(tmp_path: Path) -> None:
 def test_output_directory_is_created(tmp_path: Path) -> None:
     output = build_bibs(tmp_path / "deep" / "dir" / "bibs.pdf", first=1, last=1)
     assert output.is_file()
+
+
+def test_logo_sits_on_the_fold(small_run: Path) -> None:
+    # Логотип печатается на каждой полоске и оказывается спереди на трубе,
+    # поэтому он должен целиком помещаться в зону обхвата.
+    assert PdfReader(small_run).pages[0].images
+    layout = BibLayout()
+    assert layout.logo_size + 2 * layout.logo_gap < 2 * layout.wrap_allowance
