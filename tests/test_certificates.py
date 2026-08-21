@@ -57,6 +57,12 @@ def test_categories_and_places_are_pre_printed(pages: list[str]) -> None:
         assert place in page
 
 
+def test_chief_referee_is_printed_not_written_by_hand(pages: list[str]) -> None:
+    for page in pages:
+        assert RACE.chief_referee in page
+        assert "Главный судья · Бас төреші" in page
+
+
 def test_name_and_result_are_always_left_blank(pages: list[str]) -> None:
     for page in pages:
         assert "Фамилия · Тегі" in page

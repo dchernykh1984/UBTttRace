@@ -67,6 +67,9 @@ class RaceInfo:
     distance: Bilingual
     discipline: Bilingual
     organizer: str
+    chief_referee: str
+    """Главный судья: его имя печатается на грамотах под линией для подписи."""
+
     url: str
     """Страница гонки — на неё ведёт QR со стартового номера."""
 
@@ -110,6 +113,7 @@ RACE = RaceInfo(
         "жеке стартпен өтетін жарыс",
     ),
     organizer="Universal Bicycle Team",
+    chief_referee="Черных Денис",
     url="https://universalbicycle.team/calendar/533/",
     site_url="https://universalbicycle.team/",
     prizes=PrizeRules(entry_fee=1000, tenge_per_second=100, payout_step=1000),
