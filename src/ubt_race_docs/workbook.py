@@ -30,6 +30,7 @@ ROUNDING_CELL = "D8"
 PAID_CELL = "I4"
 REMAINDER_CELL = "I5"
 WINNERS_CELL = "I6"
+WARNING_CELL = "A9"
 
 
 def absolute(cell: str) -> str:
@@ -116,12 +117,15 @@ COLUMNS: tuple[Column, ...] = (
         '=IF($D{row}="","",SUMIFS($F${first}:$F${last},$A${first}:$A${last},'
         '">="&$A{row},$I${first}:$I${last},1)*{price})',
     ),
+    # MAX отсекает минус: если протокол вставили не по возрастанию времени,
+    # отрывы уходят в минус — в шапке про это кричит предупреждение, но выдавать
+    # «отрицательный приз» книга всё равно не должна.
     Column(
         "K",
         "К выдаче, ₸",
         12,
         MONEY_FORMAT,
-        '=IF($J{row}="","",FLOOR($J{row},{rounding}))',
+        '=IF($J{row}="","",FLOOR(MAX($J{row},0),{rounding}))',
     ),
     Column(
         "L",
@@ -146,6 +150,11 @@ TOTALS: tuple[tuple[str, str], ...] = (
     (WINNERS_CELL, "Призёров"),
 )
 
+OUT_OF_ORDER_WARNING = (
+    "Внимание: протокол вставлен не по возрастанию времени — "
+    "проверьте порядок строк, призовые посчитаны неверно"
+)
+
 INSTRUCTIONS: tuple[tuple[str, bool], ...] = (
     ("Как считать призовые", True),
     ("", False),
@@ -158,6 +167,8 @@ INSTRUCTIONS: tuple[tuple[str, bool], ...] = (
     ("4. Проверьте «Оплатило взносов»: там формула, считающая заполненные строки.", False),
     ("   Если кто-то заплатил взнос, но не финишировал, впишите число руками.", False),
     ("5. Колонка «К выдаче» — это то, что вручается наличными.", False),
+    ("6. Если строки перепутаны местами, над таблицей загорится красное", False),
+    ("   предупреждение — призовые в этом случае считать нельзя.", False),
     ("", False),
     ("Правило из положения", True),
     ("", False),
@@ -209,6 +220,12 @@ def _write_header(sheet: Worksheet, title: str, last_row: int) -> None:
             cell.number_format = MONEY_FORMAT
             cell.fill = PARAMETER_FILL
             cell.border = CELL_BORDER
+
+    warning = sheet[WARNING_CELL]
+    warning.value = (
+        f'=IF(COUNTIF($F${FIRST_DATA_ROW}:$F${last_row},"<0")>0,"{OUT_OF_ORDER_WARNING}","")'
+    )
+    warning.font = Font(bold=True, size=10, color="C00000")
 
 
 def _write_table(sheet: Worksheet, last_row: int) -> None:
