@@ -25,15 +25,30 @@ def centred_string(
     font: str,
     size: float,
     colour: colors.Color | None = None,
+    tracking: float = 0.0,
 ) -> None:
-    """Нарисовать строку, отцентрированную по `x_center`, базовой линией на `y`."""
+    """Нарисовать строку, отцентрированную по `x_center`, базовой линией на `y`.
+
+    `tracking` — разрядка между буквами: набранная ею короткая строка читается
+    как аккуратная марка, а не как обычная подпись.
+    """
     register_fonts()
     canvas.saveState()
-    canvas.setFont(font, size)
+    # Разрядку умеет только текстовый объект, у канвы такой ручки нет.
+    line = canvas.beginText(x_center - tracked_width(text, font, size, tracking) / 2, y)
+    line.setFont(font, size)
+    if tracking:
+        line.setCharSpace(tracking)
     if colour is not None:
-        canvas.setFillColor(colour)
-    canvas.drawString(x_center - text_width(text, font, size) / 2, y, text)
+        line.setFillColor(colour)
+    line.textOut(text)
+    canvas.drawText(line)
     canvas.restoreState()
+
+
+def tracked_width(text: str, font: str, size: float, tracking: float = 0.0) -> float:
+    """Ширина строки с учётом разрядки."""
+    return text_width(text, font, size) + tracking * max(len(text) - 1, 0)
 
 
 def centred_block(
