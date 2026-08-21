@@ -112,6 +112,12 @@ docs/                  инструкции по печати и сборке
 3. Мердж Release PR создаёт тег и GitHub Release, а CI собирает и прикладывает
    к нему готовые файлы для печати.
 
+Версия проекта лежит ровно в одном месте — `__version__`
+в [src/ubt_race_docs/\_\_init\_\_.py](src/ubt_race_docs/__init__.py); `pyproject.toml`
+берёт её оттуда (`dynamic = ["version"]`), а release-please правит эту строку
+по пометке `x-release-please-version`. Так релизный PR не задевает `uv.lock`,
+и `uv sync --locked` в CI не ломается на поднятой версии.
+
 > Чтобы release-please мог открывать PR, в настройках репозитория должно быть
 > включено **Settings → Actions → General → Workflow permissions →
 > Allow GitHub Actions to create and approve pull requests**.
