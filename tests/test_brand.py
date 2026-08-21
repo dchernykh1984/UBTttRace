@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from PIL import Image
 from pypdf import PdfReader
 from reportlab.lib import colors
 from reportlab.pdfgen.canvas import Canvas
@@ -48,3 +49,11 @@ def test_qr_code_is_drawn_and_stays_in_its_box(tmp_path: Path) -> None:
     canvas.save()
     assert PdfReader(output).pages[0].extract_text() == ""
     assert output.stat().st_size > 1000
+
+
+def test_logo_has_a_transparent_background() -> None:
+    # На кремовом листе грамоты белая подложка логотипа была бы видна.
+    with Image.open(LOGO_PATH) as logo:
+        assert logo.mode == "RGBA"
+        assert logo.getchannel("A").getpixel((0, 0)) == 0
+        assert min(logo.size) >= 800
