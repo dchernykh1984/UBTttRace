@@ -11,11 +11,12 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from reportlab.lib import colors
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from .draw import GREY, captioned_fill_line, centred_block, centred_string, fill_line
+from .background import draw_background
+from .brand import INK, MUTED, ORANGE
+from .draw import captioned_fill_line, centred_block, centred_string, fill_line
 from .fonts import SANS, SANS_BOLD, TITLE, register_fonts
 from .race import AWARDED_PLACES, CATEGORIES, RACE, Bilingual, Category, place_title
 
@@ -37,7 +38,6 @@ class CertificateLayout:
 
     page_width: float = 210 * mm
     page_height: float = 297 * mm
-    border_margin: float = 12 * mm
     field_width: float = 130 * mm
 
     heading_y: float = 45 * mm
@@ -59,29 +59,6 @@ class CertificateLayout:
         return self.page_height - offset
 
 
-def draw_border(canvas: Canvas, layout: CertificateLayout) -> None:
-    """Двойная рамка по краю листа."""
-    canvas.saveState()
-    canvas.setStrokeColor(colors.black)
-    canvas.setLineWidth(1.6)
-    margin = layout.border_margin
-    canvas.rect(
-        margin,
-        margin,
-        layout.page_width - 2 * margin,
-        layout.page_height - 2 * margin,
-    )
-    canvas.setLineWidth(0.5)
-    inner = margin + 3 * mm
-    canvas.rect(
-        inner,
-        inner,
-        layout.page_width - 2 * inner,
-        layout.page_height - 2 * inner,
-    )
-    canvas.restoreState()
-
-
 def draw_certificate(
     canvas: Canvas,
     layout: CertificateLayout,
@@ -90,15 +67,16 @@ def draw_certificate(
 ) -> None:
     """Нарисовать одну грамоту. Пустые `category` и `place` — запасной бланк."""
     center = layout.page_width / 2
-    draw_border(canvas, layout)
+    draw_background(canvas, layout.page_width, layout.page_height)
 
-    centred_string(canvas, center, layout.top(layout.heading_y), HEADING, TITLE, 44)
+    centred_string(canvas, center, layout.top(layout.heading_y), HEADING, TITLE, 44, INK)
     fill_line(
         canvas,
         center - layout.rule_width / 2,
         layout.top(layout.rule_y),
         layout.rule_width,
-        line_width=1.2,
+        line_width=1.4,
+        colour=ORANGE,
     )
     centred_block(canvas, center, layout.top(layout.title_y), RACE.title.lines(), SANS, 10.5, 14)
     centred_block(
@@ -112,7 +90,7 @@ def draw_certificate(
         SANS,
         9,
         12,
-        GREY,
+        MUTED,
     )
 
     if category is None:
@@ -179,7 +157,7 @@ def draw_certificate(
         SANS,
         8.5,
         11,
-        GREY,
+        MUTED,
     )
 
 

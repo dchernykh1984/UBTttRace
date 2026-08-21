@@ -10,9 +10,18 @@ from ubt_race_docs.race import RACE
 
 
 @pytest.fixture(scope="module")
-def pages(tmp_path_factory: pytest.TempPathFactory) -> list[str]:
-    output = build_certificates(tmp_path_factory.mktemp("certs") / "certificates.pdf")
-    return [page.extract_text() for page in PdfReader(output).pages]
+def certificates(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    return build_certificates(tmp_path_factory.mktemp("certs") / "certificates.pdf")
+
+
+@pytest.fixture(scope="module")
+def pages(certificates: Path) -> list[str]:
+    return [page.extract_text() for page in PdfReader(certificates).pages]
+
+
+def test_every_sheet_is_printed_on_the_branded_background(certificates: Path) -> None:
+    for page in PdfReader(certificates).pages:
+        assert page.images, "на листе нет водяного знака — значит нет и фона"
 
 
 def test_podium_of_both_categories_plus_spares(pages: list[str]) -> None:

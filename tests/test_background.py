@@ -1,0 +1,62 @@
+"""Проверки фона печатного листа."""
+
+from pathlib import Path
+
+from pypdf import PdfReader
+from reportlab.lib.units import mm
+from reportlab.pdfgen.canvas import Canvas
+
+from ubt_race_docs.background import (
+    BackgroundStyle,
+    draw_background,
+    draw_branded_background,
+)
+from ubt_race_docs.brand import LOGO_PATH
+
+WIDTH = 210 * mm
+HEIGHT = 297 * mm
+
+
+def render(tmp_path: Path, name: str, image: Path | None) -> PdfReader:
+    output = tmp_path / name
+    canvas = Canvas(str(output), pagesize=(WIDTH, HEIGHT))
+    draw_background(canvas, WIDTH, HEIGHT, image=image)
+    canvas.showPage()
+    canvas.save()
+    return PdfReader(output)
+
+
+def test_branded_background_puts_the_logo_watermark_on_the_page(tmp_path: Path) -> None:
+    assert len(render(tmp_path, "branded.pdf", None).pages[0].images) == 1
+
+
+def test_image_background_replaces_the_drawn_one(tmp_path: Path) -> None:
+    reader = render(tmp_path, "image.pdf", LOGO_PATH)
+    # Картинка одна — своего водяного знака фирменный фон уже не рисует.
+    assert len(reader.pages[0].images) == 1
+
+
+def test_background_stays_inside_the_printable_area() -> None:
+    # Офисный принтер не печатает до края: фон отступает, иначе вылезет кайма.
+    style = BackgroundStyle()
+    assert style.safe_margin >= 4 * mm
+    assert style.frame_margin > style.safe_margin + style.band_height
+
+
+def test_watermark_is_faint_enough_to_write_over() -> None:
+    assert 0 < BackgroundStyle().watermark_alpha <= 0.15
+
+
+def test_background_draws_something(tmp_path: Path) -> None:
+    empty = tmp_path / "empty.pdf"
+    canvas = Canvas(str(empty), pagesize=(WIDTH, HEIGHT))
+    canvas.showPage()
+    canvas.save()
+
+    filled = tmp_path / "filled.pdf"
+    canvas = Canvas(str(filled), pagesize=(WIDTH, HEIGHT))
+    draw_branded_background(canvas, WIDTH, HEIGHT)
+    canvas.showPage()
+    canvas.save()
+
+    assert filled.stat().st_size > empty.stat().st_size
