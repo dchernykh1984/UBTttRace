@@ -5,8 +5,14 @@ from pathlib import Path
 import pytest
 from PIL import Image
 from pypdf import PdfReader
+from reportlab.lib.units import mm
 
-from ubt_race_docs.certificates import SPARE_CERTIFICATES, build_certificates
+from ubt_race_docs.background import BackgroundStyle
+from ubt_race_docs.certificates import (
+    SPARE_CERTIFICATES,
+    CertificateLayout,
+    build_certificates,
+)
 from ubt_race_docs.race import RACE
 
 
@@ -97,3 +103,11 @@ def test_own_picture_replaces_the_drawn_background(tmp_path: Path) -> None:
 def test_missing_background_is_reported(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="нет файла фона"):
         build_certificates(tmp_path / "certificates.pdf", background=tmp_path / "нет.png")
+
+
+def test_nothing_is_printed_over_the_frame() -> None:
+    # Самая нижняя строка грамоты — подвал; он должен остаться внутри рамки.
+    layout = CertificateLayout()
+    style = BackgroundStyle()
+    footer_baseline = layout.page_height - layout.footer_y - 11
+    assert footer_baseline > style.frame_margin + style.frame_inset + 2 * mm
