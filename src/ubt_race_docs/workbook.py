@@ -20,6 +20,24 @@ DEFAULT_ROWS = 200
 HEADER_ROW = 10
 FIRST_DATA_ROW = HEADER_ROW + 1
 
+# Подписи параметров длинные, поэтому занимают слитые A:C, а значения лежат
+# в D — иначе узкая колонка «Место» обрезала бы подпись прямо в шапке.
+ENTRY_FEE_CELL = "D4"
+ENTRIES_CELL = "D5"
+FUND_CELL = "D6"
+SECOND_PRICE_CELL = "D7"
+ROUNDING_CELL = "D8"
+PAID_CELL = "I4"
+REMAINDER_CELL = "I5"
+WINNERS_CELL = "I6"
+
+
+def absolute(cell: str) -> str:
+    """«D6» → «$D$6»: ссылка, которая не поедет при копировании ячеек."""
+    column = cell[0]
+    return f"${column}${cell[1:]}"
+
+
 # Как разбирается вставленный результат (колонка L → колонка «Время, с»):
 #   меньше 0.5 — Excel уже понял ячейку как время, это доля суток → ×86400;
 #   меньше 100 — так выглядит «34:12»: Excel читает такую запись как 34 часа
@@ -75,20 +93,36 @@ COLUMNS: tuple[Column, ...] = (
         SECONDS_FORMAT,
         '=IF(OR($E{row}="",$E{next}=""),"",$E{next}-$E{row})',
     ),
-    Column("G", "Стоимость шага, ₸", 13, MONEY_FORMAT, '=IF($F{row}="","",$A{row}*$F{row}*$B$7)'),
     Column(
-        "H", "Нарастающим итогом, ₸", 15, MONEY_FORMAT, '=IF($G{row}="","",SUM($G${first}:$G{row}))'
+        "G",
+        "Стоимость шага, ₸",
+        13,
+        MONEY_FORMAT,
+        '=IF($F{row}="","",$A{row}*$F{row}*{price})',
     ),
-    Column("I", "Шаг оплачен", 9, None, '=IF($H{row}="","",IF($H{row}<=$B$6,1,0))'),
+    Column(
+        "H",
+        "Нарастающим итогом, ₸",
+        15,
+        MONEY_FORMAT,
+        '=IF($G{row}="","",SUM($G${first}:$G{row}))',
+    ),
+    Column("I", "Шаг оплачен", 9, None, '=IF($H{row}="","",IF($H{row}<={fund},1,0))'),
     Column(
         "J",
         "Приз до округления, ₸",
         15,
         MONEY_FORMAT,
         '=IF($D{row}="","",SUMIFS($F${first}:$F${last},$A${first}:$A${last},'
-        '">="&$A{row},$I${first}:$I${last},1)*$B$7)',
+        '">="&$A{row},$I${first}:$I${last},1)*{price})',
     ),
-    Column("K", "К выдаче, ₸", 12, MONEY_FORMAT, '=IF($J{row}="","",FLOOR($J{row},$B$8))'),
+    Column(
+        "K",
+        "К выдаче, ₸",
+        12,
+        MONEY_FORMAT,
+        '=IF($J{row}="","",FLOOR($J{row},{rounding}))',
+    ),
     Column(
         "L",
         "служебное: разбор времени",
@@ -98,12 +132,18 @@ COLUMNS: tuple[Column, ...] = (
     ),
 )
 
-PARAMETERS: tuple[tuple[str, str, str], ...] = (
-    ("A4", "Стартовый взнос, ₸", "B4"),
-    ("A5", "Оплатило взносов, чел.", "B5"),
-    ("A6", "Призовой фонд, ₸", "B6"),
-    ("A7", "Цена секунды, ₸", "B7"),
-    ("A8", "Округление выплаты, ₸", "B8"),
+PARAMETERS: tuple[tuple[str, str], ...] = (
+    (ENTRY_FEE_CELL, "Стартовый взнос, ₸"),
+    (ENTRIES_CELL, "Оплатило взносов, чел."),
+    (FUND_CELL, "Призовой фонд, ₸"),
+    (SECOND_PRICE_CELL, "Цена секунды, ₸"),
+    (ROUNDING_CELL, "Округление выплаты, ₸"),
+)
+
+TOTALS: tuple[tuple[str, str], ...] = (
+    (PAID_CELL, "Выплачено, ₸"),
+    (REMAINDER_CELL, "Остаток фонда, ₸"),
+    (WINNERS_CELL, "Призёров"),
 )
 
 INSTRUCTIONS: tuple[tuple[str, bool], ...] = (
@@ -143,31 +183,32 @@ def _write_header(sheet: Worksheet, title: str, last_row: int) -> None:
     sheet["A2"].font = HINT_FONT
 
     values = {
-        "B4": RACE.prizes.entry_fee,
-        "B5": f"=COUNT($E${FIRST_DATA_ROW}:$E${last_row})",
-        "B6": "=$B$4*$B$5",
-        "B7": RACE.prizes.tenge_per_second,
-        "B8": RACE.prizes.payout_step,
+        ENTRY_FEE_CELL: RACE.prizes.entry_fee,
+        ENTRIES_CELL: f"=COUNT($E${FIRST_DATA_ROW}:$E${last_row})",
+        FUND_CELL: f"={absolute(ENTRY_FEE_CELL)}*{absolute(ENTRIES_CELL)}",
+        SECOND_PRICE_CELL: RACE.prizes.tenge_per_second,
+        ROUNDING_CELL: RACE.prizes.payout_step,
+        PAID_CELL: f"=SUM($K${FIRST_DATA_ROW}:$K${last_row})",
+        REMAINDER_CELL: f"={absolute(FUND_CELL)}-{absolute(PAID_CELL)}",
+        WINNERS_CELL: f'=COUNTIF($K${FIRST_DATA_ROW}:$K${last_row},">0")',
     }
-    for label_cell, label, value_cell in PARAMETERS:
-        sheet[label_cell] = label
-        sheet[label_cell].font = Font(bold=True, size=10)
-        sheet[value_cell] = values[value_cell]
-        sheet[value_cell].number_format = MONEY_FORMAT
-        sheet[value_cell].fill = PARAMETER_FILL
-        sheet[value_cell].border = CELL_BORDER
 
-    totals = (
-        ("D4", "Выплачено, ₸", "E4", f"=SUM($K${FIRST_DATA_ROW}:$K${last_row})"),
-        ("D5", "Остаток фонда, ₸", "E5", "=$B$6-$E$4"),
-        ("D6", "Призёров", "E6", f'=COUNTIF($K${FIRST_DATA_ROW}:$K${last_row},">0")'),
-    )
-    for label_cell, label, value_cell, formula in totals:
-        sheet[label_cell] = label
-        sheet[label_cell].font = Font(bold=True, size=10)
-        sheet[value_cell] = formula
-        sheet[value_cell].number_format = MONEY_FORMAT
-        sheet[value_cell].border = CELL_BORDER
+    for cells, label_span in ((PARAMETERS, ("A", "C")), (TOTALS, ("F", "H"))):
+        for value_cell, label in cells:
+            row = value_cell[1:]
+            first, last = label_span
+            # Подпись занимает несколько колонок: узкая «Место» её бы обрезала.
+            sheet.merge_cells(f"{first}{row}:{last}{row}")
+            label_cell = sheet[f"{first}{row}"]
+            label_cell.value = label
+            label_cell.font = Font(bold=True, size=10)
+            label_cell.alignment = Alignment(horizontal="left", vertical="center")
+
+            cell = sheet[value_cell]
+            cell.value = values[value_cell]
+            cell.number_format = MONEY_FORMAT
+            cell.fill = PARAMETER_FILL
+            cell.border = CELL_BORDER
 
 
 def _write_table(sheet: Worksheet, last_row: int) -> None:
@@ -191,6 +232,9 @@ def _write_table(sheet: Worksheet, last_row: int) -> None:
                     first=FIRST_DATA_ROW,
                     last=last_row,
                     header=HEADER_ROW,
+                    fund=absolute(FUND_CELL),
+                    price=absolute(SECOND_PRICE_CELL),
+                    rounding=absolute(ROUNDING_CELL),
                 )
             if column.number_format is not None:
                 cell.number_format = column.number_format
