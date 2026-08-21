@@ -1,14 +1,12 @@
-PYTHON ?= python3
-VENV   ?= .venv
-BIN     = $(VENV)/bin
-DIST   ?= dist
+UV   ?= uv
+DIST ?= dist
 
-.PHONY: help venv install lint format typecheck test \
+.PHONY: help install lint format typecheck test \
         build kit bibs certificates waivers workbook models clean
 
 help:
 	@echo "Разработка:"
-	@echo "  make install        создать venv и поставить зависимости"
+	@echo "  make install        поставить зависимости (uv) и хуки pre-commit"
 	@echo "  make lint           ruff check + ruff format --check"
 	@echo "  make typecheck      mypy"
 	@echo "  make test           pytest"
@@ -24,47 +22,44 @@ help:
 	@echo ""
 	@echo "  make clean          удалить ./$(DIST) и кэши"
 
-$(VENV):
-	$(PYTHON) -m venv $(VENV)
-
-install: $(VENV)
-	$(BIN)/pip install --upgrade pip
-	$(BIN)/pip install -e ".[dev]"
+install:
+	$(UV) sync
+	$(UV) run pre-commit install
 
 lint:
-	$(BIN)/ruff check .
-	$(BIN)/ruff format --check .
+	$(UV) run ruff check .
+	$(UV) run ruff format --check .
 
 format:
-	$(BIN)/ruff format .
-	$(BIN)/ruff check --fix .
+	$(UV) run ruff format .
+	$(UV) run ruff check --fix .
 
 typecheck:
-	$(BIN)/mypy
+	$(UV) run mypy
 
 test:
-	$(BIN)/pytest
+	$(UV) run pytest
 
 build:
-	$(BIN)/ubt-race-docs all --out $(DIST)
+	$(UV) run ubt-race-docs all --out $(DIST)
 
 kit:
-	$(BIN)/ubt-race-docs all --with-trophies --out $(DIST)
+	$(UV) run ubt-race-docs all --with-trophies --out $(DIST)
 
 bibs:
-	$(BIN)/ubt-race-docs bibs --out $(DIST)
+	$(UV) run ubt-race-docs bibs --out $(DIST)
 
 certificates:
-	$(BIN)/ubt-race-docs certificates --out $(DIST)
+	$(UV) run ubt-race-docs certificates --out $(DIST)
 
 waivers:
-	$(BIN)/ubt-race-docs waivers --out $(DIST)
+	$(UV) run ubt-race-docs waivers --out $(DIST)
 
 workbook:
-	$(BIN)/ubt-race-docs workbook --out $(DIST)
+	$(UV) run ubt-race-docs workbook --out $(DIST)
 
 models:
-	$(BIN)/ubt-race-docs trophies --out $(DIST)
+	$(UV) run ubt-race-docs trophies --out $(DIST)
 
 clean:
 	rm -rf $(DIST) .pytest_cache .ruff_cache .mypy_cache

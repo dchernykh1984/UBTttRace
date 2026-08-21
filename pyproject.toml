@@ -14,16 +14,17 @@ dependencies = [
     "openpyxl>=3.1",
 ]
 
-[project.optional-dependencies]
+[project.scripts]
+ubt-race-docs = "ubt_race_docs.cli:main"
+
+[dependency-groups]
 dev = [
     "mypy>=1.11",
+    "pre-commit>=3.7",
     "pypdf>=4.2",
     "pytest>=8.2",
     "ruff>=0.6",
 ]
-
-[project.scripts]
-ubt-race-docs = "ubt_race_docs.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

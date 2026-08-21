@@ -25,7 +25,7 @@
 
 ## Требования
 
-- Python 3.11+
+- [uv](https://docs.astral.sh/uv/) — он же поставит нужный Python (3.11+)
 - [OpenSCAD](https://openscad.org/) — только для сборки STL-моделей кубков
 
 ## Собрать всё локально
@@ -60,18 +60,25 @@ make kit       # то же самое плюс STL кубков (нужен open
 `--help` покажет всё:
 
 ```bash
-.venv/bin/ubt-race-docs bibs --first 1 --last 500 --out dist
-.venv/bin/ubt-race-docs certificates --spare 5 --out dist
-.venv/bin/ubt-race-docs --help
+uv run ubt-race-docs bibs --first 1 --last 500 --out dist
+uv run ubt-race-docs certificates --spare 5 --out dist
+uv run ubt-race-docs --help
 ```
 
 ## Разработка
+
+Зависимости живут в `pyproject.toml`, версии зафиксированы в `uv.lock` —
+у всех и в CI ставится ровно одно и то же.
 
 ```bash
 make lint        # ruff check + ruff format --check
 make typecheck   # mypy
 make test        # pytest
 ```
+
+`make install` заодно ставит хуки [pre-commit](https://pre-commit.com/): перед
+каждым коммитом прогоняются ruff, mypy и мелкая гигиена файлов. Разово по всему
+репозиторию — `uv run pre-commit run --all-files`.
 
 ## Структура
 
