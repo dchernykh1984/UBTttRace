@@ -9,7 +9,7 @@ from __future__ import annotations
 from reportlab.lib import colors
 from reportlab.pdfgen.canvas import Canvas
 
-from .fonts import cap_height, register_fonts, text_width
+from .fonts import register_fonts, text_width
 
 GREY = colors.Color(0.45, 0.45, 0.45)
 
@@ -77,11 +77,6 @@ def stretched_string(
     canvas.restoreState()
 
 
-def stretched_height(font: str, size: float, stretch: float) -> float:
-    """Высота цифр, нарисованных `stretched_string`."""
-    return cap_height(font, size) * stretch
-
-
 def dashed_line(
     canvas: Canvas,
     x1: float,
@@ -137,27 +132,6 @@ def fill_line(
     canvas.setDash([])
     canvas.line(x, y, x + width, y)
     canvas.restoreState()
-
-
-def labelled_fill_line(
-    canvas: Canvas,
-    x: float,
-    y: float,
-    width: float,
-    label: str,
-    font: str,
-    size: float,
-    gap: float = 6,
-) -> None:
-    """Подпись слева и линейка для заполнения справа от неё."""
-    register_fonts()
-    canvas.saveState()
-    canvas.setFont(font, size)
-    canvas.setFillColor(colors.black)
-    canvas.drawString(x, y + gap * 0.35, label)
-    canvas.restoreState()
-    start = x + text_width(label, font, size) + gap
-    fill_line(canvas, start, y, max(width - (start - x), 0))
 
 
 def captioned_fill_line(
