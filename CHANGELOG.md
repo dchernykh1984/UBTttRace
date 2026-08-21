@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.3.0...v0.4.0) (2026-08-21)
+
+
+### Новое
+
+* print the chief referee on the certificates ([7e5d203](https://github.com/dchernykh1984/UBTttRace/commit/7e5d203de8509285c638380531733943ef756906))
+
 ## [0.3.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.2.0...v0.3.0) (2026-08-21)
 
 
