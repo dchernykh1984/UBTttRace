@@ -22,9 +22,9 @@ from pathlib import Path
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from .brand import draw_logo
-from .draw import dashed_line, stretched_string
-from .fonts import NUMBER, cap_height, register_fonts, text_width
+from .brand import ORANGE, draw_logo
+from .draw import centred_string, dashed_line, qr_code, stretched_string
+from .fonts import NUMBER, SANS_BOLD, cap_height, register_fonts, text_width
 from .race import RACE
 
 FIRST_BIB = 1
@@ -41,8 +41,15 @@ class BibLayout:
     """Половина периметра подседельной трубы: столько съедает оборот вокруг неё."""
 
     outer_margin: float = 8 * mm
-    top_margin: float = 9 * mm
-    bottom_margin: float = 9 * mm
+    top_margin: float = 7 * mm
+    bottom_margin: float = 7 * mm
+    qr_size: float = 20 * mm
+    """QR ведёт на страницу гонки — с него удобно смотреть протокол."""
+
+    footer_gap: float = 3 * mm
+    wordmark_size: float = 11
+    wordmark_tracking: float = 2.5
+
     logo_size: float = 24 * mm
     """Логотип на сгибе: он ляжет прямо на подседельную трубу."""
 
@@ -72,8 +79,8 @@ class BibLayout:
 
     @property
     def band_bottom(self) -> float:
-        """Низ зоны под цифры, от низа полоски."""
-        return self.bottom_margin
+        """Низ зоны под цифры, от низа полоски: под ними идут QR и марка."""
+        return self.bottom_margin + self.qr_size + self.footer_gap
 
     @property
     def band_top(self) -> float:
@@ -111,13 +118,40 @@ def draw_strip(
     digit_height = cap_height(NUMBER, font_size) * stretch
     baseline = strip_bottom + layout.band_bottom + (layout.band_height - digit_height) / 2
 
-    left_center = layout.outer_margin + layout.number_width / 2
-    right_center = layout.page_width - layout.outer_margin - layout.number_width / 2
+    left_tail = layout.outer_margin
+    right_tail = layout.page_width - layout.outer_margin - layout.number_width
 
-    for center in (left_center, right_center):
+    for tail_left in (left_tail, right_tail):
+        center = tail_left + layout.number_width / 2
         stretched_string(canvas, center, baseline, text, NUMBER, font_size, stretch)
+        draw_tail_footer(canvas, tail_left, strip_bottom, layout)
 
     draw_fold(canvas, strip_bottom, layout)
+
+
+def draw_tail_footer(
+    canvas: Canvas,
+    tail_left: float,
+    strip_bottom: float,
+    layout: BibLayout,
+) -> None:
+    """Подвал хвоста: QR у дальнего от сгиба края и марка гонки рядом с ним."""
+    far_side_is_right = tail_left > layout.center_x
+    qr_x = tail_left + layout.number_width - layout.qr_size if far_side_is_right else tail_left
+    qr_code(canvas, qr_x, strip_bottom + layout.bottom_margin, layout.qr_size, RACE.url)
+
+    wordmark_left = tail_left + layout.qr_size if far_side_is_right is False else tail_left
+    wordmark_width = layout.number_width - layout.qr_size - layout.footer_gap
+    centred_string(
+        canvas,
+        wordmark_left + layout.footer_gap + wordmark_width / 2,
+        strip_bottom + layout.bottom_margin + (layout.qr_size - layout.wordmark_size) / 2,
+        RACE.short_title,
+        SANS_BOLD,
+        layout.wordmark_size,
+        ORANGE,
+        tracking=layout.wordmark_tracking,
+    )
 
 
 def draw_fold(canvas: Canvas, strip_bottom: float, layout: BibLayout) -> None:

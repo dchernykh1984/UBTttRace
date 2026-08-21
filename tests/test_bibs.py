@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from pypdf import PdfReader
 
+from ubt_race_docs import bibs
 from ubt_race_docs.bibs import (
     BibLayout,
     build_bibs,
@@ -12,6 +13,7 @@ from ubt_race_docs.bibs import (
     number_stretch,
 )
 from ubt_race_docs.fonts import NUMBER, cap_height, text_width
+from ubt_race_docs.race import RACE
 
 MM = 72 / 25.4
 
@@ -108,3 +110,34 @@ def test_logo_sits_on_the_fold(small_run: Path) -> None:
     assert PdfReader(small_run).pages[0].images
     layout = BibLayout()
     assert layout.logo_size + 2 * layout.logo_gap < 2 * layout.wrap_allowance
+
+
+def test_wordmark_replaces_the_old_caption(small_run: Path) -> None:
+    assert PdfReader(small_run).pages[0].extract_text().count(RACE.short_title) == 4
+
+
+def test_each_tail_carries_a_qr_to_the_race_page(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[float, float, float, str]] = []
+    monkeypatch.setattr(
+        bibs,
+        "qr_code",
+        lambda canvas, x, y, size, url: calls.append((x, y, size, url)),
+    )
+    build_bibs(tmp_path / "bibs.pdf", first=1, last=1)
+
+    assert len(calls) == 2, "QR нужен на обоих хвостах — номер читают с двух сторон"
+    assert {call[3] for call in calls} == {RACE.url}
+
+    # QR стоит в дальнем от сгиба углу, чтобы не попасть в зону обхвата трубы.
+    layout = BibLayout()
+    left_qr, right_qr = sorted(call[0] for call in calls)
+    assert left_qr == pytest.approx(layout.outer_margin)
+    assert right_qr == pytest.approx(layout.page_width - layout.outer_margin - layout.qr_size)
+
+
+def test_qr_modules_stay_printable() -> None:
+    # Модуль мельче 0.5 мм телефон уже читает плохо.
+    modules = 33
+    assert BibLayout().qr_size / modules > 0.5 * (72 / 25.4)
