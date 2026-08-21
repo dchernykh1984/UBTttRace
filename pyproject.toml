@@ -37,7 +37,12 @@ version = { attr = "ubt_race_docs.__version__" }
 where = ["src"]
 
 [tool.setuptools.package-data]
-ubt_race_docs = ["assets/fonts/*.ttf", "assets/fonts/*.txt", "assets/models/*.scad"]
+ubt_race_docs = [
+    "assets/fonts/*.ttf",
+    "assets/fonts/*.txt",
+    "assets/images/*.png",
+    "assets/models/*.scad",
+]
 
 [tool.ruff]
 line-length = 100
