@@ -86,8 +86,8 @@ jobs:
         # и проверяют, что гравировка доезжает до неё параметрами.
         run: pytest tests/test_trophies.py
 
-      - name: Build documents
-        run: ubt-race-docs all --out dist
+      - name: Build everything for print
+        run: ubt-race-docs all --with-trophies --out dist
 
       - uses: actions/upload-artifact@v4
         with:
