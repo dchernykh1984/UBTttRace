@@ -1,8 +1,8 @@
 """Кубки победителям — обёртка над параметрической моделью OpenSCAD.
 
-Кубок печатается за первое место у мужчин и у женщин. Чаша у них общая,
-различаются только подставки — на них выгравированы гонка, место и категория,
-поэтому чашу достаточно нарезать один раз.
+Кубок печатается победителю у мужчин и у женщин. Велосипед у них общий,
+различаются только подставки — на них выгравированы гонка, категория и то,
+кого награждаем, — поэтому велосипед достаточно нарезать один раз.
 
 Здесь только сборка команды и запуск openscad: сама геометрия живёт
 в `assets/models/trophy.scad`.
@@ -16,28 +16,20 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from .race import CATEGORIES, RACE, Category, place_title
+from .race import CATEGORIES, RACE, Category
 
 MODEL_PATH = Path(__file__).parent / "assets" / "models" / "trophy.scad"
 FONT_PATH = Path(__file__).parent / "assets" / "fonts"
 OPENSCAD = "openscad"
-WINNER_PLACE = 1
 
 
-@dataclass(frozen=True, slots=True)
-class Trophy:
-    """Кубок конкретной категории."""
-
-    category: Category
-    place: int = WINNER_PLACE
-
-    def definitions(self) -> dict[str, str]:
-        """Надписи, которые уходят в модель параметрами `-D`."""
-        return {
-            "title_line": f"{RACE.short_title} · {RACE.date_numeric}",
-            "place_line": place_title(self.place).one_line(),
-            "category_line": self.category.name.one_line(),
-        }
+def engraving(category: Category) -> dict[str, str]:
+    """Надписи для подставки, которые уходят в модель параметрами `-D`."""
+    return {
+        "title_line": f"{RACE.short_title} · {RACE.date_numeric}",
+        "place_line": category.winner.one_line(),
+        "category_line": category.name.one_line(),
+    }
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,37 +42,32 @@ class RenderTask:
     comment: str
 
 
-def trophies() -> tuple[Trophy, ...]:
-    """Кубки, которые нужны на награждении."""
-    return tuple(Trophy(category) for category in CATEGORIES)
-
-
 def render_plan() -> tuple[RenderTask, ...]:
     """Что именно резать в STL."""
     tasks: list[RenderTask] = [
         RenderTask(
-            filename="trophy-cup.stl",
-            part="cup",
+            filename="trophy-bike.stl",
+            part="bike",
             definitions={},
-            comment="Чаша, одна и та же для обоих кубков — печатать 2 шт.",
+            comment="Велосипед, одинаковый для обоих кубков — печатать 2 шт.",
         )
     ]
-    for trophy in trophies():
-        code = trophy.category.code
+    for category in CATEGORIES:
+        code = category.code
         tasks.append(
             RenderTask(
                 filename=f"trophy-base-{code}.stl",
                 part="base",
-                definitions=trophy.definitions(),
-                comment=f"Подставка с гравировкой: {trophy.category.name.one_line()}",
+                definitions=engraving(category),
+                comment=f"Подставка с гравировкой: {category.winner.one_line()}",
             )
         )
         tasks.append(
             RenderTask(
                 filename=f"trophy-assembled-{code}.stl",
                 part="all",
-                definitions=trophy.definitions(),
-                comment="Кубок целиком — если печатать одной деталью",
+                definitions=engraving(category),
+                comment="Кубок в сборе — для предпросмотра, печатать лучше по деталям",
             )
         )
     return tuple(tasks)

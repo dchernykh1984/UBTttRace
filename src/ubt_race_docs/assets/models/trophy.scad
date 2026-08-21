@@ -1,175 +1,178 @@
-// Кубок победителя UBT TT — параметрическая модель для 3D-печати.
+// Кубок победителя UBT TT — разделочный велосипед на подставке.
 //
-// Печатается двумя деталями: подставка со стойкой и чаша. Они соединяются
-// штырём — так на столе нет нависаний, кроме ручек чаши, и обе детали влезают
-// на небольшой стол. part = "all" собирает их вместе для предпросмотра.
+// Печатается двумя деталями:
+//   base — подставка с гравировкой;
+//   bike — силуэт велосипеда, лежит плашмя, поэтому печатается без поддержек
+//          и не расслаивается.
+// Велосипед садится в пазы подставки. part = "all" собирает их для предпросмотра.
 //
-// Все надписи и размеры задаются снаружи:
-//   openscad -o trophy.stl -D 'part="base"' -D 'category_line="Мужчины · Ерлер"' models/trophy.scad
+//   openscad -o bike.stl -D 'part="bike"' trophy.scad
 
 /* [Что печатать] */
-// all — собранный кубок, base — подставка со стойкой, cup — чаша
-part = "all"; // [all, base, cup]
+part = "all"; // [all, base, bike]
 
 /* [Надписи на подставке] */
 title_line = "UBT TT · 04.10.2026";
-place_line = "1 место · 1-орын";
+place_line = "Победитель · Жеңімпаз";
 category_line = "Мужчины · Ерлер";
 font_name = "DejaVu Sans:style=Bold";
-// Гравировка ложится на плоскую часть передней грани — это
-// base_width - 2 * base_corner. Ширину строки OpenSCAD измерять не умеет,
-// поэтому её стережёт тест test_engraving_fits_the_flat_face_of_the_plinth.
 text_size = 4.0;
 text_depth = 0.8;
 text_step = 6.5;
 
 /* [Подставка] */
-base_width = 96;
-base_height = 26;
-base_corner = 10;
-base_taper = 4;
+base_length = 132;
+base_depth = 50;
+base_height = 30;
+base_corner = 8;
+base_taper = 3;
 
-/* [Стойка] */
-stem_height = 42;
-stem_bottom_radius = 16;
-stem_top_radius = 11;
-
-/* [Чаша] */
-cup_height = 56;
-cup_bottom_radius = 12;
-cup_top_radius = 36;
-cup_wall = 4;
-cup_rim = 4;
-cup_floor = 14;
-handle_major_radius = 10;
-handle_minor_radius = 3.4;
-handle_height_fraction = 0.55;
+/* [Велосипед] */
+wheel_diameter = 62;
+wheelbase = 93;
+frame_thickness = 8;
+wheel_thickness = 5;
+tyre_gap = 2.2;
 
 /* [Соединение] */
-peg_radius = 7;
-peg_height = 10;
-peg_clearance = 0.3;
+foot_width = 14;
+foot_depth = 15;
+socket_clearance = 0.35;
 
 // Гранёность держим умеренной: CGAL в OpenSCAD считает объединение
 // тысяч треугольников очень долго, а на печати разница не видна.
 $fn = 48;
-handle_fn = 24;
 
-module rounded_plinth(width, height, corner, taper) {
-    offset = width / 2 - corner;
+R = wheel_diameter / 2;
+rear_axle = [0, R];
+front_axle = [wheelbase, R];
+bottom_bracket = [40, 24];
+seat_top = [26, 90];
+head_top = [80, 70];
+head_bottom = [85, 55];
+foot_sink = 9;
+
+module tube(p1, p2, w1, w2) {
     hull() {
-        for (x = [-offset, offset], y = [-offset, offset])
-            translate([x, y, 0]) cylinder(r = corner, h = height - taper);
-        for (x = [-offset + taper, offset - taper], y = [-offset + taper, offset - taper])
-            translate([x, y, 0]) cylinder(r = corner, h = height);
+        translate(p1) circle(d = w1);
+        translate(p2) circle(d = w2);
     }
 }
 
-module engraved_lines() {
+module rear_disc() {
+    translate(rear_axle) circle(r = R);
+}
+
+// Переднее колесо — трёхлистник: спицы сделали бы модель хрупкой,
+// а на разделочном велосипеде такое колесо и стоит.
+module trispoke() {
+    rim = 8;
+    translate(front_axle) {
+        difference() { circle(r = R); circle(r = R - rim); }
+        circle(r = 5.5);
+        for (angle = [90, 210, 330])
+            rotate(angle) polygon([[-4, 3], [4, 3], [6.5, R - rim + 1], [-6.5, R - rim + 1]]);
+    }
+}
+
+// Подседельная труба и верхние перья облегают заднее колесо — это главная
+// примета разделочной рамы. Лишнее срезаем самим колесом с зазором.
+module aero_rear_triangle() {
+    difference() {
+        union() {
+            tube(bottom_bracket, seat_top, 11, 9);
+            tube(rear_axle + [4, 0], seat_top, 7, 9);
+        }
+        translate(rear_axle) circle(r = R + tyre_gap);
+    }
+}
+
+module frame() {
+    aero_rear_triangle();
+    tube(bottom_bracket, rear_axle, 5.5, 3.5);   // нижние перья
+    tube(bottom_bracket, head_bottom, 9, 7);     // нижняя труба, аэропрофиль
+    tube(seat_top, head_top, 6, 5);              // верхняя труба
+    tube(head_top, head_bottom, 6.5, 6.5);       // рулевая
+    tube(head_bottom, front_axle, 6, 3.5);       // вилка
+
+    tube(seat_top, [26, 93], 6, 5);              // мачта подседельного штыря
+    tube([19, 94], [38, 95], 3.5, 3);            // седло
+
+    tube(head_top, [90, 65], 4.5, 3.5);          // база руля
+    tube([82, 74], [106, 79], 4.5, 3.5);         // лежак
+    tube([106, 79], [110, 88], 3.5, 3);          // рог лежака
+    tube([84, 79], [97, 79], 4, 4);              // подлокотник
+
+    difference() {
+        union() {
+            translate(bottom_bracket) circle(r = 8);
+            tube(bottom_bracket, bottom_bracket + [-5, -10], 4, 3.5);
+            translate(bottom_bracket + [-5, -10]) square([9, 3], center = true);
+        }
+        translate(rear_axle) circle(r = R + tyre_gap);
+    }
+}
+
+module feet() {
+    for (x = [rear_axle[0], front_axle[0]])
+        translate([x - foot_width / 2, -foot_sink]) square([foot_width, foot_depth]);
+}
+
+module bike() {
+    linear_extrude(height = frame_thickness) { frame(); feet(); }
+    linear_extrude(height = wheel_thickness) { rear_disc(); trispoke(); }
+}
+
+module rounded_plinth() {
+    offset_x = base_length / 2 - base_corner;
+    offset_y = base_depth / 2 - base_corner;
+    hull() {
+        for (x = [-offset_x, offset_x], y = [-offset_y, offset_y])
+            translate([x, y, 0]) cylinder(r = base_corner, h = base_height - base_taper);
+        for (x = [-offset_x + base_taper, offset_x - base_taper],
+             y = [-offset_y + base_taper, offset_y - base_taper])
+            translate([x, y, 0]) cylinder(r = base_corner, h = base_height);
+    }
+}
+
+module engraved_text() {
     lines = [title_line, place_line, category_line];
     first = (len(lines) - 1) / 2;
     for (index = [0 : len(lines) - 1])
-        translate([0, -base_width / 2, base_height / 2 + (first - index) * text_step])
+        translate([0, -base_depth / 2, base_height / 2 + (first - index) * text_step])
             rotate([90, 0, 0])
                 linear_extrude(height = text_depth * 2, center = true)
-                    text(
-                        lines[index],
-                        font = font_name,
-                        size = text_size,
-                        halign = "center",
-                        valign = "center"
-                    );
+                    text(lines[index], font = font_name, size = text_size,
+                         halign = "center", valign = "center");
 }
 
-module stem() {
-    cylinder(r1 = stem_bottom_radius, r2 = stem_top_radius, h = stem_height);
-}
+function bike_span() = [-foot_width / 2, 110];
+function bike_shift() = -(bike_span()[0] + bike_span()[1]) / 2;
 
-// Внешняя форма чаши, ещё без полости.
-module cup_shell() {
-    rotate_extrude()
-        polygon(points = [
-            [0, 0],
-            [cup_bottom_radius, 0],
-            [cup_top_radius, cup_height - cup_rim],
-            [cup_top_radius, cup_height],
-            [0, cup_height],
-        ]);
-}
-
-// Полость чаши. Вычитается уже после того, как приделаны ручки, — иначе
-// внутренняя половина каждого кольца остаётся торчать внутри чаши.
-module cup_cavity() {
-    inner_top = cup_top_radius - cup_wall;
-    inner_bottom = cup_bottom_radius - cup_wall + 1;
-    translate([0, 0, cup_floor])
-        rotate_extrude()
-            polygon(points = [
-                [0, 0],
-                [inner_bottom, 0],
-                [inner_top, cup_height - cup_floor],
-                [0, cup_height - cup_floor],
-            ]);
-}
-
-module handle() {
-    rotate([90, 0, 0])
-        rotate_extrude($fn = handle_fn * 2)
-            translate([handle_major_radius, 0])
-                circle(r = handle_minor_radius, $fn = handle_fn);
-}
-
-module handles() {
-    z = cup_height * handle_height_fraction;
-    radius_at_z =
-        cup_bottom_radius + (cup_top_radius - cup_bottom_radius) * z / (cup_height - cup_rim);
-    for (side = [-1, 1])
-        translate([side * radius_at_z, 0, z]) handle();
-}
-
-module cup() {
-    difference() {
-        union() {
-            cup_shell();
-            handles();
-        }
-        cup_cavity();
-    }
+module bike_sockets() {
+    for (x = [rear_axle[0], front_axle[0]])
+        translate([
+            x + bike_shift() - (foot_width + socket_clearance) / 2,
+            -(frame_thickness + socket_clearance) / 2,
+            base_height - foot_sink,
+        ])
+            cube([foot_width + socket_clearance, frame_thickness + socket_clearance, foot_sink + 1]);
 }
 
 module base() {
     difference() {
-        union() {
-            rounded_plinth(base_width, base_height, base_corner, base_taper);
-            translate([0, 0, base_height]) stem();
-            translate([0, 0, base_height + stem_height])
-                cylinder(r = peg_radius, h = peg_height);
-        }
-        engraved_lines();
+        rounded_plinth();
+        engraved_text();
+        bike_sockets();
     }
 }
 
-// Гнездо под штырь подставки. Оно сверлится в дне чаши, поэтому дно должно
-// быть заметно толще штыря — иначе в чаше появится сквозная дыра.
-socket_depth = peg_height + peg_clearance;
-assert(
-    cup_floor >= socket_depth + 3,
-    "дно чаши тоньше гнезда под штырь: увеличьте cup_floor или укоротите peg_height"
-);
-
-module cup_with_socket() {
-    difference() {
-        cup();
-        translate([0, 0, -0.01])
-            cylinder(r = peg_radius + peg_clearance, h = socket_depth);
-    }
-}
-
-module assembly() {
-    base();
-    translate([0, 0, base_height + stem_height]) cup_with_socket();
+module standing_bike() {
+    translate([bike_shift(), frame_thickness / 2, base_height])
+        rotate([90, 0, 0])
+            bike();
 }
 
 if (part == "base") base();
-else if (part == "cup") cup_with_socket();
-else assembly();
+else if (part == "bike") bike();
+else { base(); standing_bike(); }
