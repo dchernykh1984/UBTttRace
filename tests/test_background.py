@@ -44,7 +44,9 @@ def test_background_stays_inside_the_printable_area() -> None:
     # Офисный принтер не печатает до края: фон отступает, иначе вылезет кайма.
     style = BackgroundStyle()
     assert style.safe_margin >= 4 * mm
-    assert style.frame_margin > style.safe_margin + style.band_height
+    # Рамка должна пройти ниже полосы вместе с её чёрной отбивкой,
+    # иначе горизонтальные стороны рамки не видно.
+    assert style.frame_margin > style.safe_margin + style.band_height + style.band_rule
 
 
 def test_watermark_is_faint_enough_to_write_over() -> None:

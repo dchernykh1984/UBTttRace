@@ -52,7 +52,7 @@ class CertificateLayout:
     name_y: float = 185 * mm
     result_y: float = 207 * mm
     signature_y: float = 243 * mm
-    footer_y: float = 272 * mm
+    footer_y: float = 262 * mm
 
     def top(self, offset: float) -> float:
         """Перевести отступ от верха листа в координату reportlab."""

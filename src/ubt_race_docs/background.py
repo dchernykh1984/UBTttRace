@@ -36,7 +36,10 @@ class BackgroundStyle:
     band_rule: float = 1.2 * mm
     """Чёрная отбивка под полосой."""
 
-    frame_margin: float = 16 * mm
+    frame_margin: float = 21 * mm
+    """Рамка идёт внутри полос: она должна начинаться уже за отбивкой,
+    иначе её горизонтальные стороны просто прячутся под чёрной линией."""
+
     frame_inset: float = 2.5 * mm
     watermark_size: float = 90 * mm
     watermark_alpha: float = 0.07
