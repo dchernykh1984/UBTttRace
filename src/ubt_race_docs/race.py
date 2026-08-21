@@ -39,6 +39,8 @@ class Category:
 
     code: str
     name: Bilingual
+    winner: Bilingual
+    """Как называется победитель этой категории — надпись на кубке."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -79,8 +81,17 @@ class RaceInfo:
     prizes: PrizeRules
 
 
-CATEGORY_MEN = Category(code="men", name=Bilingual("Мужчины", "Ерлер"))
-CATEGORY_WOMEN = Category(code="women", name=Bilingual("Женщины", "Әйелдер"))
+# По-казахски «жеңімпаз» одинаково для мужчин и женщин, род не меняется.
+CATEGORY_MEN = Category(
+    code="men",
+    name=Bilingual("Мужчины", "Ерлер"),
+    winner=Bilingual("Победитель", "Жеңімпаз"),
+)
+CATEGORY_WOMEN = Category(
+    code="women",
+    name=Bilingual("Женщины", "Әйелдер"),
+    winner=Bilingual("Победительница", "Жеңімпаз"),
+)
 
 CATEGORIES: tuple[Category, ...] = (CATEGORY_MEN, CATEGORY_WOMEN)
 

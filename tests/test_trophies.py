@@ -6,7 +6,6 @@ from pathlib import Path
 
 import pytest
 
-from ubt_race_docs import trophies
 from ubt_race_docs.fonts import SANS_BOLD, text_width
 from ubt_race_docs.race import CATEGORIES
 from ubt_race_docs.trophies import (
@@ -45,25 +44,26 @@ def test_model_declares_every_parameter_we_pass() -> None:
             assert f"{name} =" in model, f"в модели нет параметра {name}"
 
 
-def test_one_trophy_per_category_for_the_winner() -> None:
-    assert [trophy.category for trophy in trophies.trophies()] == list(CATEGORIES)
-    assert {trophy.place for trophy in trophies.trophies()} == {1}
+def test_every_category_gets_its_own_base() -> None:
+    filenames = [task.filename for task in render_plan()]
+    for category in CATEGORIES:
+        assert f"trophy-base-{category.code}.stl" in filenames
 
 
-def test_plan_cuts_the_shared_cup_once() -> None:
-    plan = render_plan()
-    filenames = [task.filename for task in plan]
+def test_plan_cuts_the_shared_bike_once() -> None:
+    # Велосипед у обоих кубков одинаковый, различаются только подставки.
+    filenames = [task.filename for task in render_plan()]
     assert len(filenames) == len(set(filenames))
-    assert filenames.count("trophy-cup.stl") == 1
-    assert "trophy-base-men.stl" in filenames
-    assert "trophy-base-women.stl" in filenames
+    assert filenames.count("trophy-bike.stl") == 1
 
 
-def test_engraving_carries_the_race_place_and_category() -> None:
-    base = next(task for task in render_plan() if task.filename == "trophy-base-women.stl")
-    assert base.definitions["category_line"] == "Женщины · Әйелдер"
-    assert base.definitions["place_line"] == "1 место · 1-орын"
-    assert base.definitions["title_line"] == "UBT TT · 04.10.2026"
+def test_engraving_names_the_winner_not_the_place() -> None:
+    plan = {task.filename: task for task in render_plan()}
+    women = plan["trophy-base-women.stl"].definitions
+    assert women["category_line"] == "Женщины · Әйелдер"
+    assert women["place_line"] == "Победительница · Жеңімпаз"
+    assert women["title_line"] == "UBT TT · 04.10.2026"
+    assert plan["trophy-base-men.stl"].definitions["place_line"] == "Победитель · Жеңімпаз"
 
 
 def test_command_passes_definitions_and_model(tmp_path: Path) -> None:
@@ -93,7 +93,7 @@ def test_model_compiles_with_the_engraving(tmp_path: Path) -> None:
     output = render(tmp_path / "trophy.csg", task)
     csg = output.read_text(encoding="utf-8")
     assert "Мужчины · Ерлер" in csg
-    assert "1 место · 1-орын" in csg
+    assert "Победитель · Жеңімпаз" in csg
 
 
 def test_model_engraves_with_the_font_we_ship() -> None:
@@ -103,7 +103,7 @@ def test_model_engraves_with_the_font_we_ship() -> None:
 def test_engraving_fits_the_flat_face_of_the_plinth() -> None:
     # Гравировка режется по передней грани подставки; за скруглением углов
     # буквы теряют глубину, поэтому строка должна укладываться в плоскую часть.
-    flat_half_width = model_number("base_width") / 2 - model_number("base_corner")
+    flat_half_width = model_number("base_length") / 2 - model_number("base_corner")
     em = model_number("text_size") / ASCENT
     for task in render_plan():
         for name, line in task.definitions.items():
