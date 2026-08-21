@@ -6,6 +6,7 @@ import pytest
 from pypdf import PdfReader
 
 from ubt_race_docs.certificates import SPARE_CERTIFICATES, build_certificates
+from ubt_race_docs.race import RACE
 
 
 @pytest.fixture(scope="module")
@@ -24,6 +25,9 @@ def test_every_sheet_is_a_certificate_of_this_race(pages: list[str]) -> None:
         assert "Открытая контрольная шоссейная тренировка" in page
         assert "UBT жеке стартпен" in page
         assert "Universal Bicycle Team" in page
+        # Ссылка должна пережить эту гонку, поэтому ведёт на корень сайта.
+        assert RACE.site_url in page
+        assert RACE.url not in page
 
 
 def test_categories_and_places_are_pre_printed(pages: list[str]) -> None:

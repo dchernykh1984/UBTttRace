@@ -68,6 +68,11 @@ class RaceInfo:
     discipline: Bilingual
     organizer: str
     url: str
+    """Страница гонки — на неё ведёт QR со стартового номера."""
+
+    site_url: str
+    """Корень сайта команды — его печатаем там, где ссылка должна пережить гонку."""
+
     prizes: PrizeRules
 
 
@@ -106,5 +111,6 @@ RACE = RaceInfo(
     ),
     organizer="Universal Bicycle Team",
     url="https://universalbicycle.team/calendar/533/",
+    site_url="https://universalbicycle.team/",
     prizes=PrizeRules(entry_fee=1000, tenge_per_second=100, payout_step=1000),
 )

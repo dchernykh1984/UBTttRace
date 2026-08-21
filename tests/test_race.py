@@ -42,6 +42,11 @@ def test_place_title_rejects_non_positive_place() -> None:
         place_title(0)
 
 
+def test_site_url_is_the_root_of_the_race_page() -> None:
+    assert RACE.url.startswith(RACE.site_url)
+    assert RACE.site_url.count("/") == 3
+
+
 def test_prize_rules_match_the_regulations() -> None:
     assert RACE.prizes.entry_fee == 1000
     assert RACE.prizes.tenge_per_second == 100
