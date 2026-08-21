@@ -146,6 +146,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     except subprocess.CalledProcessError as error:
         print(f"openscad не смог нарезать модель: {error.stderr.decode('utf-8', 'replace')}")
         return 4
+    except subprocess.SubprocessError as error:
+        # Сюда попадает в том числе TimeoutExpired: модель считается долго,
+        # и на слабой машине лимит вполне достижим.
+        print(f"openscad не отработал: {error}")
+        return 4
 
     _report(produced)
     return 0
