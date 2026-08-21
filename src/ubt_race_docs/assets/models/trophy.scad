@@ -37,14 +37,14 @@ cup_bottom_radius = 12;
 cup_top_radius = 36;
 cup_wall = 4;
 cup_rim = 4;
-cup_floor = 6;
+cup_floor = 14;
 handle_major_radius = 10;
 handle_minor_radius = 3.4;
 handle_height_fraction = 0.55;
 
 /* [Соединение] */
 peg_radius = 7;
-peg_height = 12;
+peg_height = 10;
 peg_clearance = 0.3;
 
 // Гранёность держим умеренной: CGAL в OpenSCAD считает объединение
@@ -146,11 +146,19 @@ module base() {
     }
 }
 
+// Гнездо под штырь подставки. Оно сверлится в дне чаши, поэтому дно должно
+// быть заметно толще штыря — иначе в чаше появится сквозная дыра.
+socket_depth = peg_height + peg_clearance;
+assert(
+    cup_floor >= socket_depth + 3,
+    "дно чаши тоньше гнезда под штырь: увеличьте cup_floor или укоротите peg_height"
+);
+
 module cup_with_socket() {
     difference() {
         cup();
         translate([0, 0, -0.01])
-            cylinder(r = peg_radius + peg_clearance, h = peg_height + 0.5);
+            cylinder(r = peg_radius + peg_clearance, h = socket_depth);
     }
 }
 
