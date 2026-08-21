@@ -38,6 +38,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 ubt_race_docs = [
+    "assets/backgrounds/*.jpeg",
     "assets/backgrounds/*.jpg",
     "assets/backgrounds/*.png",
     "assets/fonts/*.ttf",

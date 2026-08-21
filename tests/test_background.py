@@ -1,5 +1,6 @@
 """Проверки фона печатного листа."""
 
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -91,3 +92,13 @@ def test_image_dropped_into_the_assets_is_picked_up(
     dropped = tmp_path / BACKGROUND_NAMES[0]
     dropped.write_bytes(LOGO_PATH.read_bytes())
     assert resolve_image() == dropped
+
+
+def test_every_accepted_background_name_ships_with_the_package() -> None:
+    # Иначе фон работает из исходников и молча пропадает из установленного пакета.
+    pyproject = tomllib.loads(
+        (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(encoding="utf-8")
+    )
+    patterns = pyproject["tool"]["setuptools"]["package-data"]["ubt_race_docs"]
+    for name in BACKGROUND_NAMES:
+        assert f"assets/backgrounds/*{Path(name).suffix}" in patterns
