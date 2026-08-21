@@ -94,6 +94,8 @@ def test_model_compiles_with_the_engraving(tmp_path: Path) -> None:
     csg = output.read_text(encoding="utf-8")
     assert "Мужчины · Ерлер" in csg
     assert "Победитель · Жеңімпаз" in csg
+    # Логотип на гранях подставки тоже должен доехать до модели.
+    assert "ubt-logo.svg" in csg or "polygon" in csg
 
 
 def test_model_engraves_with_the_font_we_ship() -> None:
@@ -124,3 +126,19 @@ def test_command_escapes_the_caption(tmp_path: Path) -> None:
     task = RenderTask("trophy.stl", "base", {"place_line": '1 "место"'}, "тест")
     command = openscad_command(tmp_path / "trophy.stl", task)
     assert 'place_line="1 \\"место\\""' in command
+
+
+def test_logo_is_traced_next_to_the_model() -> None:
+    logo = MODEL_PATH.parent / "ubt-logo.svg"
+    assert logo.is_file()
+    assert "<svg" in logo.read_text(encoding="utf-8")
+
+
+def test_logo_fits_the_narrowest_engraved_face() -> None:
+    # Логотип идёт на три грани, самая узкая — боковая; за скруглением углов
+    # гравировка снова теряет глубину, поэтому меряем плоскую часть.
+    flat = model_number("base_depth") - 2 * model_number("base_corner")
+    source_width, source_height = 99.92, model_number("logo_source_height")
+    width = model_number("logo_height") / source_height * source_width
+    assert width < flat, f"логотип шире плоской части: {width:.1f} мм против {flat:.1f} мм"
+    assert model_number("logo_height") < model_number("base_height")
