@@ -57,10 +57,17 @@ def test_categories_and_places_are_pre_printed(pages: list[str]) -> None:
         assert place in page
 
 
-def test_chief_referee_is_printed_not_written_by_hand(pages: list[str]) -> None:
+def test_chief_referee_is_printed_above_the_line(pages: list[str]) -> None:
     for page in pages:
         assert RACE.chief_referee in page
         assert "Главный судья · Бас төреші" in page
+        # Имя идёт первым: над чертой, как и всё, что вписывают от руки.
+        assert page.index(RACE.chief_referee) < page.index("Главный судья")
+
+
+def test_signature_line_is_shorter_than_the_fields(pages: list[str]) -> None:
+    layout = CertificateLayout()
+    assert layout.signature_width < layout.field_width
 
 
 def test_name_and_result_are_always_left_blank(pages: list[str]) -> None:
