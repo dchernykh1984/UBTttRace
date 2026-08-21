@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.3.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.2.0...v0.3.0) (2026-08-21)
+
+
+### Новое
+
+* add team colours, logo and qr drawing ([a253285](https://github.com/dchernykh1984/UBTttRace/commit/a253285ebb1e1b771f1209d59dfdaf5dea38c6d5))
+* allow replacing the certificate background with an image ([96187c3](https://github.com/dchernykh1984/UBTttRace/commit/96187c32fcee337b2019f52b48d125258bc9dd4f))
+* draw a branded background on the certificates ([ff9c489](https://github.com/dchernykh1984/UBTttRace/commit/ff9c489feed081ccbdcff87fa7635ccf666db213))
+* mark the bib tails with a race qr code and wordmark ([ae41ca6](https://github.com/dchernykh1984/UBTttRace/commit/ae41ca6ebc5d63affba4f70adc49fcd57772b877))
+* put the ubt logo on the bib fold line ([cbed788](https://github.com/dchernykh1984/UBTttRace/commit/cbed7880f4b24f37f9d089a6f8479ed24a918259))
+* reserve a full seat tube wrap on the bib numbers ([243a0e5](https://github.com/dchernykh1984/UBTttRace/commit/243a0e5bb681c1fb7bdb2b94d18d9dccaa2c4cb1))
+
+
+### Исправления
+
+* cut the white box out of the logo ([74b074a](https://github.com/dchernykh1984/UBTttRace/commit/74b074a137c90e191eab6e06f6ed64951fe00457))
+* make the certificate frame clear the colour bands ([734c0a3](https://github.com/dchernykh1984/UBTttRace/commit/734c0a3f2edb74a0468322638f6ca612d4a547f6))
+* mirror the bib wordmark on both tails ([3b94fde](https://github.com/dchernykh1984/UBTttRace/commit/3b94fdeebb27fd5a24ee60ebbab0079e4e099e29))
+* point the certificate link at the site root ([40e210d](https://github.com/dchernykh1984/UBTttRace/commit/40e210d65fd211c4bb8f02e007d58fcdb54dbcd0))
+* ship jpeg backgrounds in the installed package ([9be997f](https://github.com/dchernykh1984/UBTttRace/commit/9be997fe7329e484f58cbb8dbd8a061dbdcce416))
+
+
+### Документация
+
+* describe the new bib layout and the certificate background ([8b7fec0](https://github.com/dchernykh1984/UBTttRace/commit/8b7fec025f0e044edca9d444d761c20f878dfee9))
+
+
+### Рефакторинг
+
+* drop the unused rotated text helper ([8064007](https://github.com/dchernykh1984/UBTttRace/commit/8064007bce0a9378778ce7c47aed02d9234b0f83))
+* strip technical captions from the bib numbers ([10d10df](https://github.com/dchernykh1984/UBTttRace/commit/10d10dfff4cb88cd21f784ba01dd73b7959ae80f))
+
 ## [0.2.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.1.0...v0.2.0) (2026-08-21)
 
 
