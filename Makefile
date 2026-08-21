@@ -3,17 +3,26 @@ VENV   ?= .venv
 BIN     = $(VENV)/bin
 DIST   ?= dist
 
-.PHONY: help venv install lint format typecheck test build models clean
+.PHONY: help venv install lint format typecheck test \
+        build kit bibs certificates waivers workbook models clean
 
 help:
-	@echo "make install   - создать venv и поставить зависимости"
-	@echo "make lint      - ruff check + ruff format --check"
-	@echo "make format    - отформатировать код"
-	@echo "make typecheck - mypy"
-	@echo "make test      - pytest"
-	@echo "make build     - собрать PDF/XLSX в $(DIST)"
-	@echo "make models    - собрать STL кубков в $(DIST) (нужен openscad)"
-	@echo "make clean     - удалить $(DIST) и кэши"
+	@echo "Разработка:"
+	@echo "  make install        создать venv и поставить зависимости"
+	@echo "  make lint           ruff check + ruff format --check"
+	@echo "  make typecheck      mypy"
+	@echo "  make test           pytest"
+	@echo ""
+	@echo "Сборка документов в ./$(DIST):"
+	@echo "  make build          все документы (PDF и XLSX)"
+	@echo "  make kit            все документы и кубки"
+	@echo "  make bibs           стартовые номера"
+	@echo "  make certificates   грамоты"
+	@echo "  make waivers        расписки об ответственности"
+	@echo "  make workbook       таблица призовых"
+	@echo "  make models         STL кубков (нужен openscad)"
+	@echo ""
+	@echo "  make clean          удалить ./$(DIST) и кэши"
 
 $(VENV):
 	$(PYTHON) -m venv $(VENV)
@@ -38,6 +47,21 @@ test:
 
 build:
 	$(BIN)/ubt-race-docs all --out $(DIST)
+
+kit:
+	$(BIN)/ubt-race-docs all --with-trophies --out $(DIST)
+
+bibs:
+	$(BIN)/ubt-race-docs bibs --out $(DIST)
+
+certificates:
+	$(BIN)/ubt-race-docs certificates --out $(DIST)
+
+waivers:
+	$(BIN)/ubt-race-docs waivers --out $(DIST)
+
+workbook:
+	$(BIN)/ubt-race-docs workbook --out $(DIST)
 
 models:
 	$(BIN)/ubt-race-docs trophies --out $(DIST)
