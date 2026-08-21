@@ -52,7 +52,8 @@ class CertificateLayout:
     name_y: float = 185 * mm
     result_y: float = 207 * mm
     signature_y: float = 243 * mm
-    footer_y: float = 262 * mm
+    signature_width: float = 80 * mm
+    footer_y: float = 266 * mm
 
     def top(self, offset: float) -> float:
         """Перевести отступ от верха листа в координату reportlab."""
@@ -141,15 +142,12 @@ def draw_certificate(
             9,
         )
 
-    captioned_fill_line(
-        canvas,
-        center,
-        layout.top(layout.signature_y),
-        80 * mm,
-        REFEREE_CAPTION.one_line(),
-        SANS,
-        9,
-    )
+    # Линия остаётся для живой подписи, а расшифровка под ней уже напечатана —
+    # от руки на награждении вписывают только фамилию, имя и результат.
+    signature = layout.top(layout.signature_y)
+    fill_line(canvas, center - layout.signature_width / 2, signature, layout.signature_width)
+    centred_string(canvas, center, signature - 13, RACE.chief_referee, SANS, 10.5, INK)
+    centred_string(canvas, center, signature - 25, REFEREE_CAPTION.one_line(), SANS, 9, MUTED)
     centred_block(
         canvas,
         center,
