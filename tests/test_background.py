@@ -41,13 +41,18 @@ def test_image_background_replaces_the_drawn_one(tmp_path: Path) -> None:
     assert len(reader.pages[0].images) == 1
 
 
-def test_background_stays_inside_the_printable_area() -> None:
-    # Офисный принтер не печатает до края: фон отступает, иначе вылезет кайма.
+def test_nothing_is_drawn_under_the_bleed() -> None:
+    # Кроме тона бумаги, у края листа ничего нет: офисный принтер туда
+    # не печатает, и цветная плашка вылезла бы белой каймой.
     style = BackgroundStyle()
-    assert style.safe_margin >= 4 * mm
-    # Рамка должна пройти ниже полосы вместе с её чёрной отбивкой,
-    # иначе горизонтальные стороны рамки не видно.
-    assert style.frame_margin > style.safe_margin + style.band_height + style.band_rule
+    assert style.frame_margin >= 10 * mm
+
+
+def test_corners_do_not_meet_in_the_middle_of_a_side() -> None:
+    # Уголки должны остаться уголками, а не сомкнуться в сплошную рамку.
+    style = BackgroundStyle()
+    shortest_side = 210 * mm - 2 * (style.frame_margin + style.frame_inset)
+    assert 2 * style.corner_length < shortest_side
 
 
 def test_watermark_is_faint_enough_to_write_over() -> None:
