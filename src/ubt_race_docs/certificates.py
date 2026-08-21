@@ -52,7 +52,7 @@ class CertificateLayout:
     name_y: float = 185 * mm
     result_y: float = 207 * mm
     signature_y: float = 243 * mm
-    signature_width: float = 80 * mm
+    signature_width: float = 60 * mm
     footer_y: float = 266 * mm
 
     def top(self, offset: float) -> float:
@@ -142,12 +142,12 @@ def draw_certificate(
             9,
         )
 
-    # Линия остаётся для живой подписи, а расшифровка под ней уже напечатана —
-    # от руки на награждении вписывают только фамилию, имя и результат.
+    # Имя стоит над чертой — там же, где от руки вписывают фамилию и результат,
+    # а под чертой остаётся подпись должности.
     signature = layout.top(layout.signature_y)
+    centred_string(canvas, center, signature + 5, RACE.chief_referee, SANS, 12.5, INK)
     fill_line(canvas, center - layout.signature_width / 2, signature, layout.signature_width)
-    centred_string(canvas, center, signature - 13, RACE.chief_referee, SANS, 10.5, INK)
-    centred_string(canvas, center, signature - 25, REFEREE_CAPTION.one_line(), SANS, 9, MUTED)
+    centred_string(canvas, center, signature - 12, REFEREE_CAPTION.one_line(), SANS, 9, MUTED)
     centred_block(
         canvas,
         center,
