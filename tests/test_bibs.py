@@ -55,6 +55,22 @@ def test_digits_are_large_enough_to_read_from_the_roadside() -> None:
     assert height / MM > 60
 
 
+def test_wrap_allowance_covers_a_full_turn_around_the_seat_tube() -> None:
+    # Хвосты обходят трубу каждый на половину периметра и смыкаются за ней,
+    # иначе номер сползает. 34 мм — толстая круглая подседельная труба.
+    layout = BibLayout()
+    assert layout.wraps_tube_of_diameter(34 * MM)
+    assert not layout.wraps_tube_of_diameter(60 * MM)
+
+
+def test_digits_begin_only_past_the_wrap_zone() -> None:
+    layout = BibLayout()
+    tail_start = layout.center_x + layout.wrap_allowance
+    assert tail_start + layout.number_width + layout.outer_margin == pytest.approx(
+        layout.page_width
+    )
+
+
 def test_digits_stay_inside_the_strip() -> None:
     layout = BibLayout()
     size = number_font_size(layout, 3)
