@@ -45,6 +45,7 @@ ubt_race_docs = [
     "assets/fonts/*.txt",
     "assets/images/*.png",
     "assets/models/*.scad",
+    "assets/models/*.svg",
 ]
 
 [tool.ruff]

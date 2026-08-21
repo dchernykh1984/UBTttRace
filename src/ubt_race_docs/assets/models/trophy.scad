@@ -1,7 +1,7 @@
 // Кубок победителя UBT TT — разделочный велосипед на подставке.
 //
 // Печатается двумя деталями:
-//   base — подставка с гравировкой;
+//   base — подставка с гравировкой (текст спереди, логотип на трёх гранях);
 //   bike — силуэт велосипеда, лежит плашмя, поэтому печатается без поддержек
 //          и не расслаивается.
 // Велосипед садится в пазы подставки. part = "all" собирает их для предпросмотра.
@@ -16,9 +16,15 @@ title_line = "UBT TT · 04.10.2026";
 place_line = "Победитель · Жеңімпаз";
 category_line = "Мужчины · Ерлер";
 font_name = "DejaVu Sans:style=Bold";
+logo_file = "ubt-logo.svg";
+// Ширина логотипа в файле — 100 единиц, высота — вот столько.
+logo_source_height = 70.43;
+
 text_size = 4.0;
 text_depth = 0.8;
 text_step = 6.5;
+logo_height = 18;
+logo_depth = 0.8;
 
 /* [Подставка] */
 base_length = 132;
@@ -146,6 +152,20 @@ module engraved_text() {
                          halign = "center", valign = "center");
 }
 
+module logo_plate() {
+    linear_extrude(height = logo_depth * 2, center = true)
+        scale(logo_height / logo_source_height)
+            import(logo_file, center = true);
+}
+
+// Лицевая грань занята текстом, логотип идёт на остальные три.
+module engraved_logos() {
+    z = base_height / 2;
+    translate([0, base_depth / 2, z]) rotate([90, 0, 180]) logo_plate();
+    translate([-base_length / 2, 0, z]) rotate([90, 0, -90]) logo_plate();
+    translate([base_length / 2, 0, z]) rotate([90, 0, 90]) logo_plate();
+}
+
 function bike_span() = [-foot_width / 2, 110];
 function bike_shift() = -(bike_span()[0] + bike_span()[1]) / 2;
 
@@ -163,6 +183,7 @@ module base() {
     difference() {
         rounded_plinth();
         engraved_text();
+        engraved_logos();
         bike_sockets();
     }
 }
