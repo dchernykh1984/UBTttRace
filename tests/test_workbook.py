@@ -24,10 +24,12 @@ from ubt_race_docs.workbook import (
     FIRST_DATA_ROW,
     FUND_CELL,
     HEADER_ROW,
+    OUT_OF_ORDER_WARNING,
     PAID_CELL,
     REMAINDER_CELL,
     ROUNDING_CELL,
     SECOND_PRICE_CELL,
+    WARNING_CELL,
     build_workbook,
 )
 
@@ -84,7 +86,7 @@ def test_protocol_columns_are_marked_as_input(workbook_path: Path) -> None:
 def test_every_row_of_the_table_has_formulas(workbook_path: Path) -> None:
     sheet = load_workbook(workbook_path)["Мужчины"]
     for row in (FIRST_DATA_ROW, FIRST_DATA_ROW + 25, HEADER_ROW + 50):
-        assert sheet[f"K{row}"].value == f'=IF($J{row}="","",FLOOR($J{row},$D$8))'
+        assert sheet[f"K{row}"].value == f'=IF($J{row}="","",FLOOR(MAX($J{row},0),$D$8))'
         assert "SUMIFS" in sheet[f"J{row}"].value
 
 
@@ -175,3 +177,24 @@ def test_formulas_match_the_reference_calculation(
     assert money(cell(table, PAID_CELL)) == expected.total_paid
     assert money(cell(table, REMAINDER_CELL)) == expected.remainder
     assert money(cell(table, FUND_CELL)) == expected.fund
+    assert cell(table, WARNING_CELL) == ""
+
+
+@pytest.mark.skipif(shutil.which("soffice") is None, reason="LibreOffice не установлен")
+def test_protocol_in_the_wrong_order_is_flagged(workbook_path: Path, tmp_path: Path) -> None:
+    path = tmp_path / "shuffled.xlsx"
+    shutil.copy(workbook_path, path)
+    book = load_workbook(path)
+    sheet = book["Мужчины"]
+    for index, (name, seconds) in enumerate(sorted(PROTOCOL, key=lambda row: -row[1])):
+        row = FIRST_DATA_ROW + index
+        sheet[f"C{row}"] = name
+        sheet[f"D{row}"] = seconds
+    sheet[ENTRIES_CELL] = ENTRIES
+    book.save(path)
+
+    table = recalculate(path, tmp_path)
+    assert cell(table, WARNING_CELL) == OUT_OF_ORDER_WARNING
+
+    payouts = [money(row[10]) for row in table[HEADER_ROW : HEADER_ROW + len(PROTOCOL)]]
+    assert all(amount >= 0 for amount in payouts), payouts
