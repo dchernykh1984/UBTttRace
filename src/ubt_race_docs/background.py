@@ -18,6 +18,9 @@ from reportlab.pdfgen.canvas import Canvas
 
 from .brand import INK, ORANGE, PAPER, draw_logo
 
+BACKGROUND_DIR = Path(__file__).parent / "assets" / "backgrounds"
+BACKGROUND_NAMES = ("certificate.png", "certificate.jpg", "certificate.jpeg")
+
 
 @dataclass(frozen=True, slots=True)
 class BackgroundStyle:
@@ -102,3 +105,21 @@ def draw_background(
         draw_image_background(canvas, width, height, image)
         return
     draw_branded_background(canvas, width, height, style)
+
+
+def resolve_image(explicit: Path | None = None) -> Path | None:
+    """Какую картинку подложить под лист.
+
+    Либо ту, что назвали явно, либо ту, что лежит в `assets/backgrounds`.
+    Если ни одной нет — None, и фон нарисуется кодом.
+    """
+    if explicit is not None:
+        if not explicit.is_file():
+            raise ValueError(f"нет файла фона: {explicit}")
+        return explicit
+
+    for name in BACKGROUND_NAMES:
+        candidate = BACKGROUND_DIR / name
+        if candidate.is_file():
+            return candidate
+    return None

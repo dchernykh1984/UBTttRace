@@ -32,11 +32,12 @@ def build_documents(
     last_bib: int = LAST_BIB,
     spare: int = SPARE_CERTIFICATES,
     rows: int = DEFAULT_ROWS,
+    background: Path | None = None,
 ) -> list[Path]:
     """Собрать все печатные документы гонки."""
     produced = [
         build_bibs(output / bibs_name(first_bib, last_bib), first=first_bib, last=last_bib),
-        build_certificates(output / "certificates.pdf", spare=spare),
+        build_certificates(output / "certificates.pdf", spare=spare, background=background),
     ]
     produced += [build_waiver(output / f"waiver-{form.slug}.pdf", form) for form in FORMS]
     produced.append(build_workbook(output / "prize-money.xlsx", rows=rows))
@@ -77,6 +78,12 @@ def _parser() -> argparse.ArgumentParser:
         default=SPARE_CERTIFICATES,
         help="сколько добавить незаполненных бланков",
     )
+    certificates.add_argument(
+        "--background",
+        type=Path,
+        metavar="FILE",
+        help="картинка на весь лист вместо нарисованного фона",
+    )
 
     with_output(commands.add_parser("waivers", help="расписки об ответственности"))
 
@@ -95,6 +102,12 @@ def _parser() -> argparse.ArgumentParser:
     everything.add_argument("--last", type=int, default=LAST_BIB, help="последний номер")
     everything.add_argument("--spare", type=int, default=SPARE_CERTIFICATES)
     everything.add_argument("--rows", type=int, default=DEFAULT_ROWS)
+    everything.add_argument(
+        "--background",
+        type=Path,
+        metavar="FILE",
+        help="картинка на весь лист вместо нарисованного фона грамот",
+    )
     everything.add_argument(
         "--with-trophies",
         action="store_true",
@@ -120,7 +133,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 )
             ]
         elif arguments.command == "certificates":
-            produced = [build_certificates(output / "certificates.pdf", spare=arguments.spare)]
+            produced = [
+                build_certificates(
+                    output / "certificates.pdf",
+                    spare=arguments.spare,
+                    background=arguments.background,
+                )
+            ]
         elif arguments.command == "waivers":
             produced = [build_waiver(output / f"waiver-{form.slug}.pdf", form) for form in FORMS]
         elif arguments.command == "workbook":
@@ -134,6 +153,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 last_bib=arguments.last,
                 spare=arguments.spare,
                 rows=arguments.rows,
+                background=arguments.background,
             )
             if arguments.with_trophies:
                 produced += render_all(output)
