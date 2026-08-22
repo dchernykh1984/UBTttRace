@@ -2,6 +2,7 @@
 
 import re
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,7 @@ from ubt_race_docs.trophies import (
     RenderTask,
     openscad_command,
     openscad_executable,
+    openscad_features,
     render,
     render_plan,
     scad_string,
@@ -170,3 +172,45 @@ def test_team_name_is_engraved_large_enough_to_print() -> None:
     # буква — примерно 0.11 от неё. Тоньше 0.4 мм сопло уже не воспроизводит.
     letter_height = model_number("wheel_logo_height") * 0.11
     assert letter_height > 4, f"буквы на колесе всего {letter_height:.1f} мм"
+
+
+def test_fast_engine_is_used_when_available(tmp_path: Path) -> None:
+    task = RenderTask("trophy.stl", "base", {}, "тест")
+    command = openscad_command(
+        tmp_path / "trophy.stl", task, features=frozenset({"manifold", "binstl"})
+    )
+    assert "--backend=manifold" in command
+    assert "--export-format=binstl" in command
+
+
+def test_old_openscad_gets_no_unknown_flags(tmp_path: Path) -> None:
+    # Сборка 2021 года о таких ключах не знает и просто не запустится.
+    command = openscad_command(tmp_path / "trophy.stl", RenderTask("t.stl", "base", {}, ""))
+    assert not [flag for flag in command if flag.startswith("--")]
+
+
+def test_binary_export_only_for_stl(tmp_path: Path) -> None:
+    command = openscad_command(
+        tmp_path / "trophy.csg", RenderTask("t.csg", "base", {}, ""), features=frozenset({"binstl"})
+    )
+    assert "--export-format=binstl" not in command
+
+
+def test_features_are_read_from_the_help_output(monkeypatch: pytest.MonkeyPatch) -> None:
+    def fake_help(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess([], 0, stdout="--backend=<name>\n--export-format=<f>\n")
+
+    openscad_features.cache_clear()
+    monkeypatch.setattr(subprocess, "run", fake_help)
+    assert openscad_features("/usr/bin/openscad") == {"manifold", "binstl"}
+    openscad_features.cache_clear()
+
+
+def test_missing_features_are_reported_as_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    def old_help(*_args: object, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess([], 0, stdout="Usage: openscad [options] file.scad\n")
+
+    openscad_features.cache_clear()
+    monkeypatch.setattr(subprocess, "run", old_help)
+    assert openscad_features("/usr/bin/openscad-2021") == frozenset()
+    openscad_features.cache_clear()

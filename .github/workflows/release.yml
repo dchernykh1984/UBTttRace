@@ -43,10 +43,17 @@ jobs:
       - name: Install project
         run: uv sync --locked --no-dev
 
+      # Сборка 2021 года из apt не знает движка manifold и режет гравировку
+      # логотипа минутами; свежий AppImage делает то же за секунды.
       - name: Install openscad
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends openscad fonts-dejavu-core
+          sudo apt-get install -y --no-install-recommends fonts-dejavu-core libgl1
+          curl -sSLo "$RUNNER_TEMP/openscad.AppImage" \
+            https://files.openscad.org/snapshots/OpenSCAD-2026.06.12-x86_64.AppImage
+          chmod +x "$RUNNER_TEMP/openscad.AppImage"
+          echo "OPENSCAD=$RUNNER_TEMP/openscad.AppImage" >> "$GITHUB_ENV"
+          echo "APPIMAGE_EXTRACT_AND_RUN=1" >> "$GITHUB_ENV"
 
       - name: Build everything for print
         run: uv run ubt-race-docs all --with-trophies --out dist
