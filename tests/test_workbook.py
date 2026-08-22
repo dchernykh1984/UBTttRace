@@ -90,6 +90,26 @@ def test_every_row_of_the_table_has_formulas(workbook_path: Path) -> None:
         assert "SUMIFS" in sheet[f"J{row}"].value
 
 
+def test_entry_count_comes_from_the_names_not_the_times(workbook_path: Path) -> None:
+    # Взнос платит и тот, кто потом сошёл: у него есть фамилия, но нет результата.
+    sheet = load_workbook(workbook_path)["Мужчины"]
+    assert sheet[ENTRIES_CELL].value.startswith("=COUNTA($C$")
+
+
+def test_time_is_parsed_by_hand_not_by_value(workbook_path: Path) -> None:
+    # Apple Numbers не умеет VALUE("0:34:12") — там таблица молча оставалась
+    # пустой, — поэтому текст разбирается по двоеточиям.
+    sheet = load_workbook(workbook_path)["Мужчины"]
+    formula = sheet[f"E{FIRST_DATA_ROW}"].value
+    assert "LEFT(" in formula and "MID(" in formula
+    assert f"VALUE($D{FIRST_DATA_ROW})*86400" not in formula
+
+
+def test_place_is_counted_by_results_not_by_row(workbook_path: Path) -> None:
+    sheet = load_workbook(workbook_path)["Мужчины"]
+    assert sheet[f"A{FIRST_DATA_ROW}"].value.startswith('=IF($E11="","",COUNT($E$11:$E11')
+
+
 def test_row_count_is_validated(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="хотя бы одна строка"):
         build_workbook(tmp_path / "prizes.xlsx", rows=0)
@@ -198,3 +218,24 @@ def test_protocol_in_the_wrong_order_is_flagged(workbook_path: Path, tmp_path: P
 
     payouts = [money(row[10]) for row in table[HEADER_ROW : HEADER_ROW + len(PROTOCOL)]]
     assert all(amount >= 0 for amount in payouts), payouts
+
+
+@pytest.mark.skipif(shutil.which("soffice") is None, reason="LibreOffice не установлен")
+def test_rider_without_a_result_pays_but_does_not_race(workbook_path: Path, tmp_path: Path) -> None:
+    path = tmp_path / "dnf.xlsx"
+    shutil.copy(workbook_path, path)
+    book = load_workbook(path)
+    sheet = book["Мужчины"]
+    for index, (name, seconds) in enumerate(PROTOCOL):
+        row = FIRST_DATA_ROW + index
+        sheet[f"C{row}"] = name
+        sheet[f"D{row}"] = seconds
+    dnf_row = FIRST_DATA_ROW + len(PROTOCOL)
+    sheet[f"C{dnf_row}"] = "Сошедший"
+    book.save(path)
+
+    table = recalculate(path, tmp_path)
+    assert money(cell(table, ENTRIES_CELL)) == len(PROTOCOL) + 1, "сошедший тоже платил взнос"
+    dnf = table[dnf_row - 1]
+    assert dnf[0] == "", "сошедшему место не полагается"
+    assert dnf[4] == "", "и результата у него нет"
