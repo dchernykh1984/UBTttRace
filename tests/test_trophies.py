@@ -134,11 +134,39 @@ def test_logo_is_traced_next_to_the_model() -> None:
     assert "<svg" in logo.read_text(encoding="utf-8")
 
 
-def test_logo_fits_the_narrowest_engraved_face() -> None:
-    # Логотип идёт на три грани, самая узкая — боковая; за скруглением углов
-    # гравировка снова теряет глубину, поэтому меряем плоскую часть.
+LOGO_SOURCE_WIDTH = 99.92
+"""Ширина контура в `ubt-logo.svg`: с ней он импортируется в OpenSCAD."""
+
+
+def logo_width(height_parameter: str) -> float:
+    """Ширина логотипа при заданной параметром высоте."""
+    height = model_number(height_parameter)
+    return height / model_number("logo_source_height") * LOGO_SOURCE_WIDTH
+
+
+def test_logo_fits_the_side_of_the_plinth() -> None:
+    # Логотип идёт на боковые грани; за скруглением углов гравировка теряет
+    # глубину, поэтому меряем плоскую часть грани.
     flat = model_number("base_depth") - 2 * model_number("base_corner")
-    source_width, source_height = 99.92, model_number("logo_source_height")
-    width = model_number("logo_height") / source_height * source_width
+    width = logo_width("logo_height")
     assert width < flat, f"логотип шире плоской части: {width:.1f} мм против {flat:.1f} мм"
     assert model_number("logo_height") < model_number("base_height")
+
+
+def test_logo_fits_the_rear_disc() -> None:
+    # На колесе логотип виден лучше всего, но должен остаться в пределах диска.
+    diameter = model_number("wheel_diameter")
+    assert model_number("wheel_logo_height") < diameter
+    assert logo_width("wheel_logo_height") < diameter
+
+
+def test_wheel_engraving_does_not_pierce_the_disc() -> None:
+    # Гравировка идёт с обеих сторон колеса — насквозь она бить не должна.
+    assert 2 * model_number("logo_depth") < model_number("frame_thickness") / 2
+
+
+def test_team_name_is_engraved_large_enough_to_print() -> None:
+    # В логотипе надпись «Universal Bicycle Team» занимает нижнюю треть высоты,
+    # буква — примерно 0.11 от неё. Тоньше 0.4 мм сопло уже не воспроизводит.
+    letter_height = model_number("wheel_logo_height") * 0.11
+    assert letter_height > 4, f"буквы на колесе всего {letter_height:.1f} мм"

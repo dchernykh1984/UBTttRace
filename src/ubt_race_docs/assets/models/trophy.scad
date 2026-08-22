@@ -1,7 +1,7 @@
 // Кубок победителя UBT TT — разделочный велосипед на подставке.
 //
 // Печатается двумя деталями:
-//   base — подставка с гравировкой (текст спереди, логотип на трёх гранях);
+//   base — подставка с гравировкой (текст спереди, логотип по бокам);
 //   bike — силуэт велосипеда, лежит плашмя, поэтому печатается без поддержек
 //          и не расслаивается.
 // Велосипед садится в пазы подставки. part = "all" собирает их для предпросмотра.
@@ -18,18 +18,19 @@ category_line = "Мужчины · Ерлер";
 font_name = "DejaVu Sans:style=Bold";
 logo_file = "ubt-logo.svg";
 // Ширина логотипа в файле — 100 единиц, высота — вот столько.
-logo_source_height = 70.43;
+logo_source_height = 129.4;
 
 text_size = 4.0;
 text_depth = 0.8;
 text_step = 6.5;
-logo_height = 18;
+logo_height = 28;
+wheel_logo_height = 46;
 logo_depth = 0.8;
 
 /* [Подставка] */
 base_length = 132;
 base_depth = 50;
-base_height = 30;
+base_height = 36;
 base_corner = 8;
 base_taper = 3;
 
@@ -124,12 +125,26 @@ module feet() {
 }
 
 module bike() {
-    linear_extrude(height = frame_thickness) {
-        frame();
-        feet();
-        rear_disc();
-        trispoke();
+    difference() {
+        linear_extrude(height = frame_thickness) {
+            frame();
+            feet();
+            rear_disc();
+            trispoke();
+        }
+        wheel_logos();
     }
+}
+
+// Дисковое колесо — самое видное место кубка, логотип идёт на обе его стороны.
+// Дальнюю сторону зеркалим, иначе с той стороны надпись читалась бы наоборот.
+module wheel_logos() {
+    for (side = [0, 1])
+        translate([rear_axle[0], rear_axle[1], side * frame_thickness])
+            mirror([1 - side, 0, 0])
+                linear_extrude(height = logo_depth * 2, center = true)
+                    scale(wheel_logo_height / logo_source_height)
+                        import(logo_file, center = true);
 }
 
 module rounded_plinth() {
@@ -161,10 +176,9 @@ module logo_plate() {
             import(logo_file, center = true);
 }
 
-// Лицевая грань занята текстом, логотип идёт на остальные три.
+// Лицевая грань занята текстом, логотип идёт на боковые.
 module engraved_logos() {
     z = base_height / 2;
-    translate([0, base_depth / 2, z]) rotate([90, 0, 180]) logo_plate();
     translate([-base_length / 2, 0, z]) rotate([90, 0, -90]) logo_plate();
     translate([base_length / 2, 0, z]) rotate([90, 0, 90]) logo_plate();
 }
