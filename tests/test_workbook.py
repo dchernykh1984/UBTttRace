@@ -239,3 +239,40 @@ def test_rider_without_a_result_pays_but_does_not_race(workbook_path: Path, tmp_
     dnf = table[dnf_row - 1]
     assert dnf[0] == "", "сошедшему место не полагается"
     assert dnf[4] == "", "и результата у него нет"
+
+
+FRACTIONAL_PROTOCOL: tuple[tuple[str, str, float], ...] = (
+    ("Kazantsev Ilya", "00:29:26.1", 1766.1),
+    ("Троицкий Сергей", "00:29:46.9", 1786.9),
+    ("Бижан Ғибадат", "00:29:53.4", 1793.4),
+    ("Chernykh Denis", "00:30:21.9", 1821.9),
+)
+
+
+@pytest.mark.skipif(shutil.which("soffice") is None, reason="LibreOffice не установлен")
+def test_tenths_of_a_second_survive_the_protocol(workbook_path: Path, tmp_path: Path) -> None:
+    # Протокол гонки печатает время с десятыми: «00:29:26.1». Раньше на них
+    # разбор спотыкался и вся таблица оставалась пустой.
+    path = tmp_path / "tenths.xlsx"
+    shutil.copy(workbook_path, path)
+    book = load_workbook(path)
+    sheet = book["Мужчины"]
+    for index, (name, shown, _) in enumerate(FRACTIONAL_PROTOCOL):
+        row = FIRST_DATA_ROW + index
+        sheet[f"C{row}"] = name
+        sheet[f"D{row}"] = shown
+    book.save(path)
+
+    table = recalculate(path, tmp_path)
+    expected = distribute(
+        [Result(name=name, seconds=seconds) for name, _, seconds in FRACTIONAL_PROTOCOL],
+        fund_from_entries(len(FRACTIONAL_PROTOCOL)),
+    )
+
+    def number(text: str) -> float:
+        return float(text.replace("\xa0", "").replace(" ", "").replace(",", ".") or 0)
+
+    rows = table[HEADER_ROW : HEADER_ROW + len(FRACTIONAL_PROTOCOL)]
+    assert [number(row[4]) for row in rows] == [seconds for _, _, seconds in FRACTIONAL_PROTOCOL]
+    assert [number(row[10]) for row in rows] == [payout.amount for payout in expected.payouts]
+    assert number(cell(table, PAID_CELL)) == expected.total_paid
