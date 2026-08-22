@@ -3,6 +3,12 @@
 Судья вставляет протокол категории (номер, участник, результат) в жёлтую зону,
 всё остальное считают формулы прямо в книге — пересчёт мгновенный, ничего
 запускать не нужно. Правила распределения те же, что в `prizes`.
+
+Порог, от которого считаются выигранные секунды, книга подбирает сама:
+сначала по накопленным временам находится порог, при котором выплаты без
+округления дают ровно фонд, а потом рядом с ним перебирается двести значений
+с шагом в десятую долю секунды и берётся самое большое, при котором
+округлённые до тысячи выплаты ещё умещаются в фонд.
 """
 
 from __future__ import annotations
@@ -30,7 +36,14 @@ ROUNDING_CELL = "D8"
 PAID_CELL = "I4"
 REMAINDER_CELL = "I5"
 WINNERS_CELL = "I6"
+THRESHOLD_CELL = "I7"
 WARNING_CELL = "A9"
+
+# Служебные ячейки подбора порога — за краем видимой части листа.
+EVEN_THRESHOLD_CELL = "V4"
+BASE_PAID_CELL = "V5"
+BASE_REMAINDER_CELL = "V6"
+BASE_WINNERS_CELL = "V7"
 
 
 def absolute(cell: str) -> str:
@@ -66,6 +79,12 @@ HINT_FONT = Font(size=9, color="808080")
 THIN = Side(style="thin", color="BFBFBF")
 CELL_BORDER = Border(left=THIN, right=THIN, top=THIN, bottom=THIN)
 
+GRID_POINTS = 200
+"""Сколько порогов перебирается вокруг найденного — по 0.1 секунды."""
+
+GRID_HALF_WIDTH = 10.0
+"""На сколько секунд перебор уходит в каждую сторону."""
+
 
 @dataclass(frozen=True, slots=True)
 class Column:
@@ -94,87 +113,123 @@ COLUMNS: tuple[Column, ...] = (
         10,
         SECONDS_FORMAT,
         '=IF($D{row}="","",IFERROR('
-        "IF($L{row}=-1,"
+        "IF($I{row}=-1,"
         "IF($D{row}<0.5,$D{row}*86400,IF($D{row}<100,$D{row}*1440,$D{row})),"
-        "IF($L{row}=2,VALUE(LEFT($D{row},$M{row}-1))*3600"
-        "+VALUE(MID($D{row},$M{row}+1,$N{row}-$M{row}-1))*60,"
-        "IF($L{row}=1,VALUE(LEFT($D{row},$M{row}-1))*60,0))"
-        "+IF($P{row}=0,VALUE($O{row}),"
-        "VALUE(LEFT($O{row},$P{row}-1))"
-        "+VALUE(MID($O{row},$P{row}+1,10))/10^(LEN($O{row})-$P{row}))"
+        "IF($I{row}=2,VALUE(LEFT($D{row},$J{row}-1))*3600"
+        "+VALUE(MID($D{row},$J{row}+1,$K{row}-$J{row}-1))*60,"
+        "IF($I{row}=1,VALUE(LEFT($D{row},$J{row}-1))*60,0))"
+        "+IF($M{row}=0,VALUE($L{row}),"
+        "VALUE(LEFT($L{row},$M{row}-1))"
+        "+VALUE(MID($L{row},$M{row}+1,10))/10^(LEN($L{row})-$M{row}))"
         '),""))',
     ),
     Column(
         "F",
-        "Отрыв до следующего, с",
-        12,
+        "Опережение порога, с",
+        13,
         SECONDS_FORMAT,
-        '=IF(OR($E{row}="",$E{next}=""),"",$E{next}-$E{row})',
+        '=IF($E{row}="","",MAX(0,{threshold}-$E{row}))',
     ),
     Column(
         "G",
-        "Стоимость шага, ₸",
-        13,
-        MONEY_FORMAT,
-        '=IF($F{row}="","",$A{row}*$F{row}*{price})',
-    ),
-    Column(
-        "H",
-        "Нарастающим итогом, ₸",
-        15,
-        MONEY_FORMAT,
-        '=IF($G{row}="","",SUM($G${first}:$G{row}))',
-    ),
-    Column("I", "Шаг оплачен", 9, None, '=IF($H{row}="","",IF($H{row}<={fund},1,0))'),
-    Column(
-        "J",
         "Приз до округления, ₸",
         15,
         MONEY_FORMAT,
-        '=IF($E{row}="","",SUMIFS($F${first}:$F${last},$A${first}:$A${last},'
-        '">="&$A{row},$I${first}:$I${last},1)*{price})',
+        '=IF($E{row}="","",$F{row}*{price})',
     ),
-    # MAX отсекает минус: если протокол вставили не по возрастанию времени,
-    # отрывы уходят в минус — в шапке про это кричит предупреждение, но выдавать
-    # «отрицательный приз» книга всё равно не должна.
+    # Тысяча нераспределённого остатка достаётся первому, кому ничего не досталось.
     Column(
-        "K",
+        "H",
         "К выдаче, ₸",
         12,
         MONEY_FORMAT,
-        '=IF($J{row}="","",FLOOR(MAX($J{row},0),{rounding}))',
+        '=IF($E{row}="","",$T{row}+IF(AND({base_remainder}>={rounding},'
+        "COUNT($E${first}:$E{row})={base_winners}+1),{rounding},0))",
     ),
     Column(
-        "L",
+        "I",
         "служебное: двоеточий",
         11,
         None,
         '=IF($D{row}="","",IF(ISTEXT($D{row}),LEN($D{row})-LEN(SUBSTITUTE($D{row},":","")),-1))',
     ),
-    Column("M", "служебное: первое двоеточие", 11, None, '=IFERROR(FIND(":",$D{row}),0)'),
+    Column("J", "служебное: первое двоеточие", 11, None, '=IFERROR(FIND(":",$D{row}),0)'),
     Column(
-        "N",
+        "K",
         "служебное: второе двоеточие",
         11,
         None,
-        '=IFERROR(FIND(":",$D{row},$M{row}+1),0)',
+        '=IFERROR(FIND(":",$D{row},$J{row}+1),0)',
     ),
     Column(
-        "O",
+        "L",
         "служебное: секунды текстом",
         13,
         None,
-        '=IF($D{row}="","",IF($L{row}=2,MID($D{row},$N{row}+1,10),'
-        'IF($L{row}=1,MID($D{row},$M{row}+1,10),IF($L{row}=0,$D{row},""))))',
+        '=IF($D{row}="","",IF($I{row}=2,MID($D{row},$K{row}+1,10),'
+        'IF($I{row}=1,MID($D{row},$J{row}+1,10),IF($I{row}=0,$D{row},""))))',
     ),
     Column(
-        "P",
+        "M",
         "служебное: дробная часть",
         13,
         None,
-        '=IF($O{row}="",0,IFERROR(FIND(".",SUBSTITUTE($O{row},",",".")),0))',
+        '=IF($L{row}="",0,IFERROR(FIND(".",SUBSTITUTE($L{row},",",".")),0))',
+    ),
+    # Пустым строкам подставляем заведомо недостижимое время: так формулы
+    # перебора порога остаются числовыми и не спотыкаются о пустые ячейки.
+    Column("N", "служебное: время для расчёта", 13, None, '=IF($E{row}="",10^9,$E{row})'),
+    Column(
+        "O",
+        "служебное: сумма времён",
+        13,
+        None,
+        '=IF($E{row}="","",SUM($E${first}:$E{row}))',
+    ),
+    # Если призовые получают ровно эти участники, то вот порог, при котором
+    # выплаты без округления дают ровно фонд.
+    Column(
+        "P",
+        "служебное: порог для места",
+        14,
+        SECONDS_FORMAT,
+        '=IF($E{row}="","",({fund}/{price}+$O{row})/COUNT($E${first}:$E{row}))',
+    ),
+    Column(
+        "Q",
+        "служебное: порог подходит",
+        13,
+        None,
+        '=IF($E{row}="",0,IF(AND($E{row}<$P{row},OR($E{next}="",$P{row}<=$E{next})),1,0))',
+    ),
+    Column(
+        "R",
+        "служебное: перебор порога",
+        14,
+        SECONDS_FORMAT,
+        '=IF({even_threshold}=0,"",ROUND({even_threshold},1)-'
+        + str(GRID_HALF_WIDTH)
+        + "+({row}-{first})*"
+        + str(round(2 * GRID_HALF_WIDTH / GRID_POINTS, 3))
+        + ")",
+    ),
+    Column(
+        "S",
+        "служебное: выплаты при пороге",
+        16,
+        MONEY_FORMAT,
+        '=IF($R{row}="","",SUMPRODUCT(($N${first}:$N${last}<$R{row})*'
+        "ROUND(($R{row}-$N${first}:$N${last})/({rounding}/{price}),0))*{rounding})",
+    ),
+    Column(
+        "T",
+        "служебное: приз без добавки",
+        16,
+        MONEY_FORMAT,
+        '=IF($E{row}="","",ROUND($G{row}/{rounding},0)*{rounding})',
     ),
 )
+
 
 PARAMETERS: tuple[tuple[str, str], ...] = (
     (ENTRY_FEE_CELL, "Стартовый взнос, ₸"),
@@ -188,6 +243,14 @@ TOTALS: tuple[tuple[str, str], ...] = (
     (PAID_CELL, "Выплачено, ₸"),
     (REMAINDER_CELL, "Остаток фонда, ₸"),
     (WINNERS_CELL, "Призёров"),
+    (THRESHOLD_CELL, "Пороговое время, с"),
+)
+
+SERVICE_CELLS: tuple[tuple[str, str], ...] = (
+    (EVEN_THRESHOLD_CELL, "служебное: порог без округления"),
+    (BASE_PAID_CELL, "служебное: выплаты без добавки"),
+    (BASE_REMAINDER_CELL, "служебное: остаток без добавки"),
+    (BASE_WINNERS_CELL, "служебное: призёров без добавки"),
 )
 
 OUT_OF_ORDER_WARNING = (
@@ -204,7 +267,8 @@ INSTRUCTIONS: tuple[tuple[str, bool], ...] = (
     ("   начиная со строки 11, в порядке финиша — от лучшего времени к худшему.", False),
     ("   Сошедших и снятых оставляйте без результата — место и приз им", False),
     ("   не посчитаются, а во взносах они учтутся.", False),
-    ("3. Результат понимается в любом виде: 0:34:12, 34:12 или числом секунд 2052.", False),
+    ("3. Результат понимается в том виде, в каком его печатает протокол:", False),
+    ("   00:29:26.1, 34:12 или просто число секунд. Десятые доли учитываются.", False),
     ("4. «Оплатило взносов» считается по колонке «Участник»: взнос платит и тот,", False),
     ("   кто потом сошёл или был снят. Число можно перебить руками.", False),
     ("5. Колонка «К выдаче» — это то, что вручается наличными.", False),
@@ -213,16 +277,22 @@ INSTRUCTIONS: tuple[tuple[str, bool], ...] = (
     ("", False),
     ("Правило из положения", True),
     ("", False),
-    ("Каждая выигранная по протоколу секунда стоит 100 ₸: сначала победитель получает", False),
-    ("за отрыв от второго, затем первые двое — за отрыв от третьего, и так далее,", False),
-    ("пока призовой фонд не кончится. Кому не хватило — тот без приза.", False),
+    ("Каждая выигранная секунда стоит 100 ₸. Считаются они от порогового времени:", False),
+    ("участник получает за столько секунд, на сколько опередил порог. Победитель", False),
+    ("тем самым получает за отрыв от второго, первые двое — за отрыв от третьего", False),
+    ("и так далее, как и написано в положении.", False),
     ("", False),
-    ("Шаг, на который остатка фонда не хватает целиком, не оплачивается вовсе,", False),
-    ("и распределение на нём останавливается. Итог каждого округляется вниз", False),
-    ("до 1000 ₸ — чтобы выдавать тысячными купюрами и не выйти за фонд.", False),
+    ("Само пороговое время книга подбирает так, чтобы фонд разошёлся целиком:", False),
+    ("суммы округляются до ближайшей тысячи, а порог двигается с шагом в десятую", False),
+    ("долю секунды, пока сумма выплат не сравняется с фондом. Найденный порог", False),
+    ("показан в шапке — по нему легко проверить любую строку вручную.", False),
     ("", False),
-    ("Колонки после «Время, с» — расчётные, их менять не нужно.", False),
-    ("Колонка L служебная: она разбирает то, что вставили в «Результат».", False),
+    ("Если попасть в фонд точно нельзя — так бывает, когда несколько участников", False),
+    ("показали совпадающее до десятой доли время, — лишняя тысяча достаётся первому", False),
+    ("из тех, кому ничего не досталось, а всё сверх неё остаётся в фонде.", False),
+    ("", False),
+    ("Колонки после «Время, с» — расчётные, их менять не нужно. Служебные колонки", False),
+    ("справа разбирают вставленный результат и перебирают пороговое время.", False),
 )
 
 
@@ -234,37 +304,59 @@ def _write_header(sheet: Worksheet, title: str, last_row: int) -> None:
     )
     sheet["A2"].font = HINT_FONT
 
+    first = FIRST_DATA_ROW
+    fund = absolute(FUND_CELL)
     values = {
         ENTRY_FEE_CELL: RACE.prizes.entry_fee,
-        ENTRIES_CELL: f"=COUNTA($C${FIRST_DATA_ROW}:$C${last_row})",
+        ENTRIES_CELL: f"=COUNTA($C${first}:$C${last_row})",
         FUND_CELL: f"={absolute(ENTRY_FEE_CELL)}*{absolute(ENTRIES_CELL)}",
         SECOND_PRICE_CELL: RACE.prizes.tenge_per_second,
         ROUNDING_CELL: RACE.prizes.payout_step,
-        PAID_CELL: f"=SUM($K${FIRST_DATA_ROW}:$K${last_row})",
-        REMAINDER_CELL: f"={absolute(FUND_CELL)}-{absolute(PAID_CELL)}",
-        WINNERS_CELL: f'=COUNTIF($K${FIRST_DATA_ROW}:$K${last_row},">0")',
+        PAID_CELL: f"=SUM($H${first}:$H${last_row})",
+        REMAINDER_CELL: f"={fund}-{absolute(PAID_CELL)}",
+        WINNERS_CELL: f'=COUNTIF($H${first}:$H${last_row},">0")',
+        # Из перебора берём самый большой порог, при котором выплаты ещё
+        # умещаются в фонд: сумма выплат по порогу не убывает.
+        THRESHOLD_CELL: (
+            f"=SUMPRODUCT(MAX(($S${first}:$S${last_row}<={fund})"
+            f'*($R${first}:$R${last_row}<>"")*$R${first}:$R${last_row}))'
+        ),
+        EVEN_THRESHOLD_CELL: f"=SUMIF($Q${first}:$Q${last_row},1,$P${first}:$P${last_row})",
+        BASE_PAID_CELL: f"=SUM($T${first}:$T${last_row})",
+        BASE_REMAINDER_CELL: f"={fund}-{absolute(BASE_PAID_CELL)}",
+        BASE_WINNERS_CELL: f'=COUNTIF($T${first}:$T${last_row},">0")',
     }
 
     for cells, label_span in ((PARAMETERS, ("A", "C")), (TOTALS, ("F", "H"))):
         for value_cell, label in cells:
             row = value_cell[1:]
-            first, last = label_span
+            left, right = label_span
             # Подпись занимает несколько колонок: узкая «Место» её бы обрезала.
-            sheet.merge_cells(f"{first}{row}:{last}{row}")
-            label_cell = sheet[f"{first}{row}"]
+            sheet.merge_cells(f"{left}{row}:{right}{row}")
+            label_cell = sheet[f"{left}{row}"]
             label_cell.value = label
             label_cell.font = Font(bold=True, size=10)
             label_cell.alignment = Alignment(horizontal="left", vertical="center")
 
             cell = sheet[value_cell]
             cell.value = values[value_cell]
-            cell.number_format = MONEY_FORMAT
+            cell.number_format = SECONDS_FORMAT if value_cell == THRESHOLD_CELL else MONEY_FORMAT
             cell.fill = PARAMETER_FILL
             cell.border = CELL_BORDER
 
+    for service_cell, label in SERVICE_CELLS:
+        row = service_cell[1:]
+        sheet[f"U{row}"] = label
+        sheet[f"U{row}"].font = HINT_FONT
+        sheet[service_cell] = values[service_cell]
+        sheet[service_cell].number_format = SECONDS_FORMAT
+
     warning = sheet[WARNING_CELL]
     warning.value = (
-        f'=IF(COUNTIF($F${FIRST_DATA_ROW}:$F${last_row},"<0")>0,"{OUT_OF_ORDER_WARNING}","")'
+        f"=IF(SUMPRODUCT(($N${first}:$N${last_row - 1}<10^9)"
+        f"*($N${first + 1}:$N${last_row}<10^9)"
+        f"*($N${first}:$N${last_row - 1}>$N${first + 1}:$N${last_row}))>0,"
+        f'"{OUT_OF_ORDER_WARNING}","")'
     )
     warning.font = Font(bold=True, size=10, color="C00000")
 
@@ -293,6 +385,10 @@ def _write_table(sheet: Worksheet, last_row: int) -> None:
                     fund=absolute(FUND_CELL),
                     price=absolute(SECOND_PRICE_CELL),
                     rounding=absolute(ROUNDING_CELL),
+                    threshold=absolute(THRESHOLD_CELL),
+                    even_threshold=absolute(EVEN_THRESHOLD_CELL),
+                    base_remainder=absolute(BASE_REMAINDER_CELL),
+                    base_winners=absolute(BASE_WINNERS_CELL),
                 )
             if column.number_format is not None:
                 cell.number_format = column.number_format

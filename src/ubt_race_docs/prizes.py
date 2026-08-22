@@ -1,13 +1,22 @@
 """Расчёт призовых по положению гонки.
 
 Фонд у мужчин и у женщин раздельный и целиком складывается из их стартовых
-взносов. Каждая выигранная по протоколу секунда стоит 100 ₸: сначала победитель
-получает за отрыв от второго, затем первые двое — за отрыв от третьего, и так
-далее, пока фонд не кончится.
+взносов. Каждая выигранная секунда стоит 100 ₸, и считаются они от порогового
+времени: участник получает за столько секунд, на сколько опередил порог.
 
-Шаг, на который денег уже не хватает, не оплачивается вовсе — распределение
-на нём останавливается. Итоговая сумма каждого округляется вниз до 1000 ₸,
-чтобы выдавать наличными тысячными купюрами и не выйти за фонд.
+Порог не берётся с потолка — он подбирается так, чтобы фонд разошёлся целиком.
+Суммы округляются до ближайшей тысячи (наличные выдаются тысячными купюрами),
+и порог двигается с шагом в десятую долю секунды, пока сумма всех выплат
+не сравняется с фондом.
+
+Так распределение остаётся тем же по духу, что и в положении: победитель
+получает за отрыв от второго, первые двое — за отрыв от третьего и так далее.
+Разница в том, что порог может встать не ровно на чьё-то время, а между —
+за счёт этого фонд уходит без остатка.
+
+Если из-за округления попасть точно в фонд нельзя (так бывает, когда несколько
+участников показали совпадающее до десятой доли время), лишняя тысяча уходит
+первому из тех, кому ничего не досталось, а всё сверх неё остаётся в фонде.
 """
 
 from __future__ import annotations
@@ -15,8 +24,20 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from itertools import pairwise
+from math import floor, inf
 
 from .race import RACE, PrizeRules
+
+TIME_STEP = 0.1
+"""Шаг подбора порога: протоколы печатаются с точностью до десятой доли."""
+
+TIME_DIGITS = 6
+"""До скольких знаков приводится порог.
+
+Без этого 21152 × 0.1 даёт 2115.2000000000003, и участник, стоящий ровно
+на границе округления, случайно перескакивает через неё — расчёт разъезжается
+с тем, что считает книга.
+"""
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,17 +50,6 @@ class Result:
 
 
 @dataclass(frozen=True, slots=True)
-class Step:
-    """Шаг распределения: отрыв между местами `index` и `index + 1`."""
-
-    index: int
-    gap: float
-    cost: float
-    cumulative: float
-    funded: bool
-
-
-@dataclass(frozen=True, slots=True)
 class Payout:
     """Сколько получает участник на месте `place`."""
 
@@ -48,14 +58,21 @@ class Payout:
     raw: float
     amount: int
 
+    @property
+    def ahead_of_threshold(self) -> float:
+        """На сколько секунд участник опередил пороговое время."""
+        return self.raw / RACE.prizes.tenge_per_second
+
 
 @dataclass(frozen=True, slots=True)
 class Distribution:
     """Итог распределения фонда."""
 
     fund: int
-    steps: tuple[Step, ...]
+    threshold: float
     payouts: tuple[Payout, ...]
+    leftover_place: int | None = None
+    """Место, которому досталась тысяча нераспределённого остатка."""
 
     @property
     def total_paid(self) -> int:
@@ -78,23 +95,65 @@ def fund_from_entries(entries: int, rules: PrizeRules = RACE.prizes) -> int:
     return entries * rules.entry_fee
 
 
-def _steps(results: Sequence[Result], fund: int, rules: PrizeRules) -> tuple[Step, ...]:
-    steps: list[Step] = []
-    cumulative = 0.0
-    for index in range(1, len(results)):
-        gap = results[index].seconds - results[index - 1].seconds
-        cost = index * gap * rules.tenge_per_second
-        cumulative += cost
-        steps.append(
-            Step(
-                index=index,
-                gap=gap,
-                cost=cost,
-                cumulative=cumulative,
-                funded=cumulative <= fund,
-            )
-        )
-    return tuple(steps)
+def round_to_step(amount: float, step: int) -> int:
+    """Округление до ближайшего шага; ровная половина идёт вверх."""
+    return floor(amount / step + 0.5) * step
+
+
+def payout_at(threshold: float, seconds: float, rules: PrizeRules) -> int:
+    """Сколько получит участник с таким временем при таком пороге."""
+    ahead = max(0.0, threshold - seconds)
+    return round_to_step(ahead * rules.tenge_per_second, rules.payout_step)
+
+
+def total_at(threshold: float, results: Sequence[Result], rules: PrizeRules) -> int:
+    """Сумма всех выплат при данном пороге."""
+    return sum(payout_at(threshold, result.seconds, rules) for result in results)
+
+
+def even_threshold(results: Sequence[Result], fund: int, rules: PrizeRules) -> float:
+    """Порог, при котором выплаты **без округления** дают ровно фонд.
+
+    Если призовые получают `m` первых участников, то сумма выплат равна
+    `(m·T − Σt) · цена секунды`. Отсюда `T` для каждого `m` считается напрямую,
+    а верным будет тот `m`, при котором порог попадает между временем `m`-го
+    участника и следующего за ним.
+    """
+    times = sorted(result.seconds for result in results)
+    target = fund / rules.tenge_per_second
+    running = 0.0
+    threshold = times[0]
+    for index, current in enumerate(times):
+        running += current
+        candidate = (target + running) / (index + 1)
+        following = times[index + 1] if index + 1 < len(times) else inf
+        threshold = candidate
+        if current < candidate <= following:
+            break
+    return threshold
+
+
+def on_grid(tenths: int) -> float:
+    """Порог по номеру десятой доли, без хвостов плавающей арифметики."""
+    return round(tenths * TIME_STEP, TIME_DIGITS)
+
+
+def fitting_threshold(results: Sequence[Result], fund: int, rules: PrizeRules) -> float:
+    """Наибольший порог (с точностью до десятой), при котором выплаты влезают в фонд.
+
+    Сумма выплат по порогу не убывает, поэтому границу ищем двоичным поиском.
+    """
+    fastest = min(result.seconds for result in results)
+    low = floor(fastest / TIME_STEP)
+    high = floor(even_threshold(results, fund, rules) / TIME_STEP) + 200
+
+    while low < high:
+        middle = (low + high + 1) // 2
+        if total_at(on_grid(middle), results, rules) <= fund:
+            low = middle
+        else:
+            high = middle - 1
+    return on_grid(low)
 
 
 def distribute(
@@ -113,15 +172,37 @@ def distribute(
                 f"{previous.name} ({previous.seconds} с)"
             )
 
-    steps = _steps(results, fund, rules)
-    payouts: list[Payout] = []
-    for place, result in enumerate(results, start=1):
-        raw = sum(
-            step.gap * rules.tenge_per_second
-            for step in steps
-            if step.funded and step.index >= place
-        )
-        amount = int(raw // rules.payout_step) * rules.payout_step
-        payouts.append(Payout(place=place, result=result, raw=raw, amount=amount))
+    if not results:
+        return Distribution(fund=fund, threshold=0.0, payouts=())
 
-    return Distribution(fund=fund, steps=steps, payouts=tuple(payouts))
+    threshold = fitting_threshold(results, fund, rules) if fund else results[0].seconds
+    payouts = [
+        Payout(
+            place=place,
+            result=result,
+            raw=max(0.0, threshold - result.seconds) * rules.tenge_per_second,
+            amount=payout_at(threshold, result.seconds, rules),
+        )
+        for place, result in enumerate(results, start=1)
+    ]
+
+    leftover_place = None
+    leftover = fund - sum(payout.amount for payout in payouts)
+    if leftover >= rules.payout_step:
+        for index, payout in enumerate(payouts):
+            if payout.amount == 0:
+                payouts[index] = Payout(
+                    place=payout.place,
+                    result=payout.result,
+                    raw=payout.raw,
+                    amount=rules.payout_step,
+                )
+                leftover_place = payout.place
+                break
+
+    return Distribution(
+        fund=fund,
+        threshold=threshold,
+        payouts=tuple(payouts),
+        leftover_place=leftover_place,
+    )
