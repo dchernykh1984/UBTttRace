@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.6.0...v0.6.1) (2026-08-22)
+
+
+### Исправления
+
+* lower the saddle and free the front wheel on the trophy ([e5100af](https://github.com/dchernykh1984/UBTttRace/commit/e5100af7b26460da3316a4e8b1ca4ce440b5b0d9))
+* read race times with tenths of a second ([1105bb6](https://github.com/dchernykh1984/UBTttRace/commit/1105bb6a6fffb49476b92bbc4b4374d825f67bdd))
+
+
+### Документация
+
+* mention tenths of a second in the results ([ab86e12](https://github.com/dchernykh1984/UBTttRace/commit/ab86e123c02de6d1e989cafc7c00cf34508c998c))
+
 ## [0.6.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.5.0...v0.6.0) (2026-08-22)
 
 
