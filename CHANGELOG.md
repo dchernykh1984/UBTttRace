@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.6.1...v0.7.0) (2026-08-22)
+
+
+### Новое
+
+* pay prizes from a threshold time that empties the fund ([448c702](https://github.com/dchernykh1984/UBTttRace/commit/448c702bf288333023b4b030165445516de42fca))
+
 ## [0.6.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.6.0...v0.6.1) (2026-08-22)
 
 
