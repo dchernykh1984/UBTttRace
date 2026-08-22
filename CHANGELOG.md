@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.5.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.4.0...v0.5.0) (2026-08-22)
+
+
+### Новое
+
+* engrave the ubt logo on the trophy base ([04070b6](https://github.com/dchernykh1984/UBTttRace/commit/04070b65842835e4d0d1daa0c6105cb812834074))
+* make the certificate background lighter ([afad762](https://github.com/dchernykh1984/UBTttRace/commit/afad762ec64d041b87ea722cac4d2ed79b23611d))
+* shape the trophy as a time trial bike for the winner ([8d0ce30](https://github.com/dchernykh1984/UBTttRace/commit/8d0ce304db3688b9eebf90d275506eddcf7f8a2f))
+
+
+### Исправления
+
+* print the chief referee above the signature line ([bac7181](https://github.com/dchernykh1984/UBTttRace/commit/bac718100dc8976f36eb6843894f711ded3bab01))
+
+
+### Документация
+
+* describe the time trial bike trophy ([63de332](https://github.com/dchernykh1984/UBTttRace/commit/63de3324194a1c12b1225ff6bff4f8da3d233304))
+
 ## [0.4.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.3.0...v0.4.0) (2026-08-21)
 
 
