@@ -62,7 +62,10 @@ jobs:
     name: Build print kit
     needs: [quality, tests]
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # Кубок-велосипед с гравировками режется в STL заметно дольше прежней
+    # чаши: CGAL вычитает текст и логотип из подставки почти две минуты
+    # на деталь, и всего деталей пять.
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
 
