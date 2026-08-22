@@ -37,8 +37,8 @@ base_taper = 3;
 wheel_diameter = 62;
 wheelbase = 93;
 frame_thickness = 8;
-wheel_thickness = 5;
-tyre_gap = 2.2;
+wheel_overlap = 2;
+// Насколько рама заходит на колесо — так перья с ним срастаются.
 
 /* [Соединение] */
 foot_width = 14;
@@ -53,7 +53,7 @@ R = wheel_diameter / 2;
 rear_axle = [0, R];
 front_axle = [wheelbase, R];
 bottom_bracket = [40, 24];
-seat_top = [26, 90];
+seat_top = [26, 87];
 head_top = [80, 70];
 head_bottom = [85, 55];
 foot_sink = 9;
@@ -89,7 +89,7 @@ module aero_rear_triangle() {
             tube(bottom_bracket, seat_top, 11, 9);
             tube(rear_axle + [4, 0], seat_top, 7, 9);
         }
-        translate(rear_axle) circle(r = R + tyre_gap);
+        translate(rear_axle) circle(r = R - wheel_overlap);
     }
 }
 
@@ -101,11 +101,10 @@ module frame() {
     tube(head_top, head_bottom, 6.5, 6.5);       // рулевая
     tube(head_bottom, front_axle, 6, 3.5);       // вилка
 
-    tube(seat_top, [26, 93], 6, 5);              // мачта подседельного штыря
-    tube([19, 94], [38, 95], 3.5, 3);            // седло
+    tube(seat_top, [26, 89], 6, 5);              // мачта подседельного штыря
+    tube([19, 90], [38, 91], 3.5, 3);            // седло
 
-    tube(head_top, [90, 65], 4.5, 3.5);          // база руля
-    tube([82, 74], [106, 79], 4.5, 3.5);         // лежак
+    tube(head_top, [106, 79], 5, 3.5);           // лежак
     tube([106, 79], [110, 88], 3.5, 3);          // рог лежака
     tube([84, 79], [97, 79], 4, 4);              // подлокотник
 
@@ -115,7 +114,7 @@ module frame() {
             tube(bottom_bracket, bottom_bracket + [-5, -10], 4, 3.5);
             translate(bottom_bracket + [-5, -10]) square([9, 3], center = true);
         }
-        translate(rear_axle) circle(r = R + tyre_gap);
+        translate(rear_axle) circle(r = R - wheel_overlap);
     }
 }
 
@@ -125,8 +124,12 @@ module feet() {
 }
 
 module bike() {
-    linear_extrude(height = frame_thickness) { frame(); feet(); }
-    linear_extrude(height = wheel_thickness) { rear_disc(); trispoke(); }
+    linear_extrude(height = frame_thickness) {
+        frame();
+        feet();
+        rear_disc();
+        trispoke();
+    }
 }
 
 module rounded_plinth() {
