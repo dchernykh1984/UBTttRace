@@ -1,11 +1,15 @@
 """Проверки распределения призового фонда."""
 
+import random
+
 import pytest
 
 from ubt_race_docs.prizes import (
     Result,
     distribute,
+    even_threshold,
     fund_from_entries,
+    round_to_step,
 )
 from ubt_race_docs.race import RACE, PrizeRules
 
@@ -28,40 +32,25 @@ def test_negative_entries_are_rejected() -> None:
         fund_from_entries(-1)
 
 
-def test_winner_is_paid_for_the_gap_to_the_second() -> None:
-    distribution = distribute(results(3600, 3662), fund=40_000)
-    assert distribution.payouts[0].raw == 6_200
-    assert distribution.payouts[0].amount == 6_000
-    assert distribution.payouts[1].amount == 0
+def test_rounding_goes_to_the_nearest_thousand() -> None:
+    assert round_to_step(2730, 1000) == 3000
+    assert round_to_step(650, 1000) == 1000
+    assert round_to_step(490, 1000) == 0
+    assert round_to_step(500, 1000) == 1000
+    assert round_to_step(1500, 1000) == 2000
 
 
-def test_each_step_is_shared_by_everyone_above_it() -> None:
-    # Отрывы 62, 31 и 15 секунд: шаги стоят 6200, 6200 и 4500 ₸.
-    distribution = distribute(results(3600, 3662, 3693, 3708), fund=40_000)
-    assert [step.cost for step in distribution.steps] == [6_200, 6_200, 4_500]
-    assert [step.cumulative for step in distribution.steps] == [6_200, 12_400, 16_900]
-    assert all(step.funded for step in distribution.steps)
-    assert [payout.raw for payout in distribution.payouts] == [10_800, 4_600, 1_500, 0]
-    assert [payout.amount for payout in distribution.payouts] == [10_000, 4_000, 1_000, 0]
+def test_real_protocol_spends_the_whole_fund() -> None:
+    # Протокол мужской группы: четыре финишера, фонд из четырёх взносов.
+    distribution = distribute(results(1766.1, 1786.9, 1793.4, 1821.9), fund_from_entries(4))
+    assert [payout.amount for payout in distribution.payouts] == [3000, 1000, 0, 0]
+    assert distribution.total_paid == distribution.fund
+    assert distribution.remainder == 0
 
 
 def test_payout_never_exceeds_the_fund() -> None:
     distribution = distribute(results(*range(3600, 3600 + 60 * 30, 30)), fund=20_000)
     assert distribution.total_paid <= distribution.fund
-    assert distribution.remainder >= 0
-
-
-def test_step_that_does_not_fit_is_not_paid_at_all() -> None:
-    # Первый шаг стоит 6200, второй — 6200: на второй остатка (3800) не хватает.
-    distribution = distribute(results(3600, 3662, 3693), fund=10_000)
-    assert [step.funded for step in distribution.steps] == [True, False]
-    assert [payout.amount for payout in distribution.payouts] == [6_000, 0, 0]
-
-
-def test_distribution_stops_and_does_not_skip_to_a_cheaper_step() -> None:
-    # Третий шаг дешёвый, но идти дальше уже нельзя: фонд кончился на втором.
-    distribution = distribute(results(0, 62, 124, 124.5), fund=10_000)
-    assert [step.funded for step in distribution.steps] == [True, False, False]
 
 
 def test_prizes_do_not_grow_down_the_protocol() -> None:
@@ -72,22 +61,27 @@ def test_prizes_do_not_grow_down_the_protocol() -> None:
 
 def test_equal_times_get_equal_money() -> None:
     distribution = distribute(results(3600, 3600, 3700), fund=40_000)
-    first, second, third = distribution.payouts
+    first, second, _ = distribution.payouts
     assert first.amount == second.amount
-    assert third.amount == 0
 
 
-def test_single_finisher_gets_nothing_to_win_seconds_from() -> None:
-    distribution = distribute(results(3600), fund=40_000)
-    assert distribution.payouts[0].amount == 0
-    assert distribution.steps == ()
+def test_single_finisher_takes_the_fund() -> None:
+    # Обгонять некого, но фонд собран из взносов и должен уйти победителю.
+    distribution = distribute(results(3600), fund=5_000)
+    assert distribution.payouts[0].amount == 5_000
+    assert distribution.remainder == 0
+
+
+def test_lonely_leader_with_a_huge_gap() -> None:
+    distribution = distribute(results(3600, 7200), fund=4_000)
+    assert [payout.amount for payout in distribution.payouts] == [4000, 0]
+    assert distribution.remainder == 0
 
 
 def test_empty_protocol_is_allowed() -> None:
     distribution = distribute([], fund=40_000)
     assert distribution.payouts == ()
     assert distribution.remainder == 40_000
-    assert distribution.winners == ()
 
 
 def test_zero_fund_pays_nobody() -> None:
@@ -109,10 +103,46 @@ def test_rules_are_configurable() -> None:
     rules = PrizeRules(entry_fee=500, tenge_per_second=10, payout_step=100)
     distribution = distribute(results(0, 62), fund=fund_from_entries(10, rules), rules=rules)
     assert distribution.fund == 5_000
-    assert distribution.payouts[0].raw == 620
-    assert distribution.payouts[0].amount == 600
+    assert distribution.total_paid == 5_000
 
 
-def test_winners_are_only_those_with_money() -> None:
-    distribution = distribute(results(0, 62, 93), fund=40_000)
-    assert [payout.place for payout in distribution.winners] == [1, 2]
+def test_threshold_without_rounding_spends_the_fund_exactly() -> None:
+    protocol = results(1766.1, 1786.9, 1793.4, 1821.9)
+    threshold = even_threshold(protocol, 4_000, RULES)
+    raw = sum(max(0.0, threshold - result.seconds) * RULES.tenge_per_second for result in protocol)
+    assert raw == pytest.approx(4_000)
+
+
+def test_thousand_goes_to_the_first_rider_left_without_money() -> None:
+    # Трое с одинаковым временем: округление не даёт попасть в фонд точно.
+    distribution = distribute(results(1000.0, 1000.0, 1000.0, 2000.0), fund=4_000)
+    assert distribution.leftover_place == 4
+    assert distribution.payouts[3].amount == 1000
+    assert distribution.total_paid <= distribution.fund
+
+
+@pytest.mark.parametrize("riders", [1, 2, 3, 7, 25, 60])
+def test_fund_is_spent_completely_on_realistic_protocols(riders: int) -> None:
+    # Времена «раздельного старта» на 25 км: около получаса и десятки секунд
+    # разброса. На таких данных фонд должен уходить целиком.
+    random.seed(riders)
+    seconds = sorted(round(random.uniform(1700, 2600), 1) for _ in range(riders))
+    fund = fund_from_entries(riders)
+    distribution = distribute(results(*seconds), fund)
+    assert distribution.total_paid == fund, f"{riders} гонщиков: остаток {distribution.remainder}"
+
+
+@pytest.mark.parametrize("seed", range(40))
+def test_distribution_holds_together_on_random_protocols(seed: int) -> None:
+    random.seed(seed)
+    riders = random.randint(1, 40)
+    seconds = sorted(round(random.uniform(1500, 3000), 1) for _ in range(riders))
+    fund = fund_from_entries(random.randint(riders, riders + 30))
+
+    distribution = distribute(results(*seconds), fund)
+    amounts = [payout.amount for payout in distribution.payouts]
+
+    assert distribution.total_paid <= fund, "выплаты не должны превышать фонд"
+    assert amounts == sorted(amounts, reverse=True), "ниже по протоколу — не больше денег"
+    assert all(amount % RULES.payout_step == 0 for amount in amounts), "выдаём тысячными купюрами"
+    assert distribution.remainder == 0 or distribution.leftover_place is not None
