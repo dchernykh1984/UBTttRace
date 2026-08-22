@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.6.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.5.0...v0.6.0) (2026-08-22)
+
+
+### Новое
+
+* engrave the full team logo on the wheel and plinth sides ([b36dfbc](https://github.com/dchernykh1984/UBTttRace/commit/b36dfbcde62c79f43a8d5559d12f7829ede1e943))
+
+
+### Исправления
+
+* count entries by name and parse times in apple numbers ([90595bc](https://github.com/dchernykh1984/UBTttRace/commit/90595bc2741de88fbdefd6059be269efcb885fa6))
+* tidy the trophy bike frame ([362a9e2](https://github.com/dchernykh1984/UBTttRace/commit/362a9e25fbc3334650c7774797c11ceb48b958e9))
+
+
+### Производительность
+
+* cut the trophy models with the manifold engine ([4c26cdd](https://github.com/dchernykh1984/UBTttRace/commit/4c26cdde2d83f87232bbe89ad95c45a07af42c4d))
+
 ## [0.5.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.4.0...v0.5.0) (2026-08-22)
 
 
