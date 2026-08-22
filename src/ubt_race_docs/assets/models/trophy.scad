@@ -54,9 +54,12 @@ R = wheel_diameter / 2;
 rear_axle = [0, R];
 front_axle = [wheelbase, R];
 bottom_bracket = [40, 24];
-seat_top = [26, 87];
+seat_top = [26, 80];
 head_top = [80, 70];
 head_bottom = [85, 55];
+// Нижняя труба приходит к рулевой высоко, почти под верхнюю: иначе она
+// врезалась бы в переднее колесо.
+down_tube_top = [82, 63];
 foot_sink = 9;
 
 module tube(p1, p2, w1, w2) {
@@ -97,13 +100,13 @@ module aero_rear_triangle() {
 module frame() {
     aero_rear_triangle();
     tube(bottom_bracket, rear_axle, 5.5, 3.5);   // нижние перья
-    tube(bottom_bracket, head_bottom, 9, 7);     // нижняя труба, аэропрофиль
+    tube(bottom_bracket, down_tube_top, 7.5, 6);  // нижняя труба, аэропрофиль
     tube(seat_top, head_top, 6, 5);              // верхняя труба
     tube(head_top, head_bottom, 6.5, 6.5);       // рулевая
     tube(head_bottom, front_axle, 6, 3.5);       // вилка
 
-    tube(seat_top, [26, 89], 6, 5);              // мачта подседельного штыря
-    tube([19, 90], [38, 91], 3.5, 3);            // седло
+    tube(seat_top, [26, 82], 6, 5);              // мачта подседельного штыря
+    tube([19, 83], [38, 84], 3.5, 3);            // седло
 
     tube(head_top, [106, 79], 5, 3.5);           // лежак
     tube([106, 79], [110, 88], 3.5, 3);          // рог лежака
@@ -112,8 +115,9 @@ module frame() {
     difference() {
         union() {
             translate(bottom_bracket) circle(r = 8);
-            tube(bottom_bracket, bottom_bracket + [-5, -10], 4, 3.5);
-            translate(bottom_bracket + [-5, -10]) square([9, 3], center = true);
+            // Шатун смотрит вниз и чуть вперёд. Педали нет: сбоку от каретки
+            // она была бы тонкой и хрупкой, а в профиль сливалась бы с рамой.
+            tube(bottom_bracket, bottom_bracket + [5, -11], 4.5, 3.5);
         }
         translate(rear_axle) circle(r = R - wheel_overlap);
     }
