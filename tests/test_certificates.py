@@ -13,7 +13,7 @@ from ubt_race_docs.certificates import (
     CertificateLayout,
     build_certificates,
 )
-from ubt_race_docs.fonts import SANS_BOLD, text_width
+from ubt_race_docs.fonts import SANS, SANS_BOLD, text_width
 from ubt_race_docs.race import AWARDED_PLACES, RACE, award_groups
 
 
@@ -40,8 +40,8 @@ def test_podium_of_every_award_group_plus_spares(pages: list[str]) -> None:
 def test_every_sheet_is_a_certificate_of_this_race(pages: list[str]) -> None:
     for page in pages:
         assert "ГРАМОТА" in page
-        assert "Открытая контрольная шоссейная тренировка" in page
-        assert "UBT жеке стартпен" in page
+        assert "День рождения UBT" in page
+        assert "UBT туған күні" in page
         assert "Universal Bicycle Team" in page
         # Ссылка должна пережить эту гонку, поэтому ведёт на корень сайта.
         assert RACE.site_url in page
@@ -64,6 +64,16 @@ def test_age_groups_are_all_covered(pages: list[str]) -> None:
     printed = "\n".join(pages)
     for group in award_groups():
         assert printed.count(group.title.ru) == len(AWARDED_PLACES)
+
+
+def test_race_title_fits_the_certificate() -> None:
+    # Название гонки печатается в две строки и должно остаться внутри рамки.
+    layout = CertificateLayout()
+    style = BackgroundStyle()
+    inside_frame = layout.page_width - 2 * (style.frame_margin + style.frame_inset)
+    assert layout.title_width < inside_frame, "название должно оставаться внутри рамки"
+    for line in RACE.title.lines():
+        assert text_width(line, SANS, layout.title_size) < layout.title_width
 
 
 def test_group_title_fits_the_certificate() -> None:
