@@ -40,7 +40,7 @@ class BibLayout:
     wrap_allowance: float = 55 * mm
     """Половина периметра подседельной трубы: столько съедает оборот вокруг неё."""
 
-    outer_margin: float = 8 * mm
+    outer_margin: float = 6 * mm
     top_margin: float = 7 * mm
     bottom_margin: float = 7 * mm
     logo_size: float = 24 * mm
@@ -48,7 +48,7 @@ class BibLayout:
 
     logo_gap: float = 3 * mm
 
-    max_stretch: float = 2.0
+    max_stretch: float = 2.4
     """Растяжение по вертикали: оборот вокруг трубы съедает ширину, и высота —
     единственный способ вернуть цифрам размер. Больше — цифры выглядят
     неестественно вытянутыми."""
