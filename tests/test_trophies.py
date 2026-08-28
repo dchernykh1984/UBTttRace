@@ -214,3 +214,33 @@ def test_missing_features_are_reported_as_empty(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setattr(subprocess, "run", old_help)
     assert openscad_features("/usr/bin/openscad-2021") == frozenset()
     openscad_features.cache_clear()
+
+
+GIANT_SOURCE_WIDTH = 99.81
+"""Ширина контура в `giant-logo.svg`."""
+
+GIANT_SOURCE_HEIGHT = 19.19
+
+
+def test_partner_logo_is_traced_next_to_the_model() -> None:
+    logo = MODEL_PATH.parent / "giant-logo.svg"
+    assert logo.is_file()
+    assert "<svg" in logo.read_text(encoding="utf-8")
+
+
+def test_partner_logo_fits_the_back_of_the_plinth() -> None:
+    flat = model_number("base_length") - 2 * model_number("base_corner")
+    length = model_number("giant_base_length")
+    assert length < flat, f"логотип партнёра шире плоской части: {length} против {flat}"
+    height = length / GIANT_SOURCE_WIDTH * GIANT_SOURCE_HEIGHT
+    assert height < model_number("base_height")
+
+
+def test_partner_logo_fits_the_down_tube() -> None:
+    # Логотип лежит вдоль нижней трубы и не должен вылезать за её края.
+    height = model_number("giant_tube_length") / GIANT_SOURCE_WIDTH * GIANT_SOURCE_HEIGHT
+    assert height < model_number("down_tube_top_width")
+
+
+def test_engraving_never_cuts_through_the_frame() -> None:
+    assert 2 * model_number("logo_depth") < model_number("frame_thickness") / 2
