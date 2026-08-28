@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.10.0...v0.11.0) (2026-08-28)
+
+
+### Новое
+
+* turn the trophy cake into a round three-dimensional one ([189936a](https://github.com/dchernykh1984/UBTttRace/commit/189936a6537f6dcd1a5bd534a437abd02d1fbb80))
+
+
+### Документация
+
+* describe the round trophy cake ([d43a5a3](https://github.com/dchernykh1984/UBTttRace/commit/d43a5a3702b3ff1e54caeb2e7c377726a2b52a07))
+
 ## [0.10.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.9.0...v0.10.0) (2026-08-28)
 
 
