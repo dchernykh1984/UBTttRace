@@ -29,7 +29,7 @@ METRICS_SLOP = 1.06
 
 def model_number(name: str) -> float:
     """Числовой параметр модели — читаем прямо из .scad, чтобы не разъехалось."""
-    match = re.search(rf"^{name} = ([0-9.]+);", MODEL_PATH.read_text(encoding="utf-8"), re.M)
+    match = re.search(rf"^{name} = (-?[0-9.]+);", MODEL_PATH.read_text(encoding="utf-8"), re.M)
     assert match is not None, f"в модели нет параметра {name}"
     return float(match.group(1))
 
@@ -244,3 +244,29 @@ def test_partner_logo_fits_the_down_tube() -> None:
 
 def test_engraving_never_cuts_through_the_frame() -> None:
     assert 2 * model_number("logo_depth") < model_number("frame_thickness") / 2
+
+
+def test_cake_is_cut_as_its_own_part() -> None:
+    plan = {task.filename: task for task in render_plan()}
+    assert "trophy-cake.stl" in plan
+    assert plan["trophy-cake.stl"].part == "cake"
+    assert plan["trophy-cake.stl"].definitions == {}, "гравировки на тортике нет"
+
+
+def test_cake_stands_in_its_own_plane() -> None:
+    # Тортик стоит перед велосипедом, в своей плоскости: детали плоские
+    # и не должны задевать друг друга.
+    gap = abs(model_number("bike_offset_y") - model_number("cake_offset_y"))
+    assert gap > model_number("frame_thickness")
+
+
+def test_cake_fits_the_depth_of_the_plinth() -> None:
+    for offset in (model_number("bike_offset_y"), model_number("cake_offset_y")):
+        edge = abs(offset) + model_number("frame_thickness") / 2
+        assert edge < model_number("base_depth") / 2, "фигура свисает с подставки"
+
+
+def test_candle_is_thick_enough_to_survive() -> None:
+    # Свечка — самая тонкая часть кубка; в плоской фигуре её держит толщина.
+    assert model_number("candle_width") >= 2.5
+    assert model_number("candle_width") * model_number("frame_thickness") > 20

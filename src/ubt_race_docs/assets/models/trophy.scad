@@ -47,6 +47,25 @@ down_tube_top_width = 6;
 wheel_overlap = 2;
 // Насколько рама заходит на колесо — так перья с ним срастаются.
 
+/* [Тортик] */
+// Гонка приурочена ко дню рождения команды, поэтому рядом с велосипедом
+// стоит тортик со свечкой — такой же плоской фигурой, только в своей плоскости.
+cake_width = 28;
+cake_base_height = 12;
+cake_top_width = 19;
+cake_top_height = 7;
+cake_drops = 4;
+cake_drop = 2;
+candle_width = 3;
+candle_height = 10;
+flame_width = 5;
+flame_height = 7.5;
+// Единственное место, где тортик виден целиком: просвет между колёсами.
+// Правее его закрывает переднее колесо, левее — заднее.
+cake_x = 7;
+bike_offset_y = 13;
+cake_offset_y = -13;
+
 /* [Соединение] */
 foot_width = 14;
 foot_depth = 15;
@@ -174,6 +193,47 @@ module wheel_logos() {
                         import(logo_file, center = true);
 }
 
+module cake_tier(width, height, y) {
+    half = width / 2;
+    translate([0, y])
+        hull() {
+            for (side = [-1, 1]) {
+                translate([side * (half - 2), 2]) circle(r = 2);
+                translate([side * (half - 2), height - 2]) circle(r = 2);
+            }
+        }
+}
+
+module cake_profile() {
+    top = cake_base_height + cake_top_height;
+    cake_tier(cake_width, cake_base_height, 0);
+    cake_tier(cake_top_width, cake_top_height, cake_base_height);
+
+    // Капли крема по краю верхнего яруса; их чётное число, чтобы середина
+    // осталась свободной под свечку.
+    step = (cake_top_width - cake_drop) / cake_drops;
+    for (index = [0 : cake_drops - 1])
+        translate([-(cake_top_width - cake_drop - step) / 2 + index * step, top])
+            circle(r = cake_drop);
+
+    translate([-candle_width / 2, top]) square([candle_width, candle_height]);
+    hull() {
+        translate([0, top + candle_height + flame_width / 2]) circle(d = flame_width);
+        translate([0, top + candle_height + flame_height]) circle(d = 0.8);
+    }
+}
+
+module cake_foot() {
+    translate([-foot_width / 2, -foot_sink]) square([foot_width, foot_sink + 4]);
+}
+
+module cake() {
+    linear_extrude(height = frame_thickness) {
+        cake_profile();
+        cake_foot();
+    }
+}
+
 module rounded_plinth() {
     offset_x = base_length / 2 - base_corner;
     offset_y = base_depth / 2 - base_corner;
@@ -221,14 +281,19 @@ module engraved_logos() {
 function bike_span() = [-foot_width / 2, 110];
 function bike_shift() = -(bike_span()[0] + bike_span()[1]) / 2;
 
+module socket_at(x, y) {
+    translate([
+        x - (foot_width + socket_clearance) / 2,
+        y - (frame_thickness + socket_clearance) / 2,
+        base_height - foot_sink,
+    ])
+        cube([foot_width + socket_clearance, frame_thickness + socket_clearance, foot_sink + 1]);
+}
+
 module bike_sockets() {
     for (x = [rear_axle[0], front_axle[0]])
-        translate([
-            x + bike_shift() - (foot_width + socket_clearance) / 2,
-            -(frame_thickness + socket_clearance) / 2,
-            base_height - foot_sink,
-        ])
-            cube([foot_width + socket_clearance, frame_thickness + socket_clearance, foot_sink + 1]);
+        socket_at(x + bike_shift(), bike_offset_y);
+    socket_at(cake_x, cake_offset_y);
 }
 
 module base() {
@@ -241,11 +306,18 @@ module base() {
 }
 
 module standing_bike() {
-    translate([bike_shift(), frame_thickness / 2, base_height])
+    translate([bike_shift(), bike_offset_y + frame_thickness / 2, base_height])
         rotate([90, 0, 0])
             bike();
 }
 
+module standing_cake() {
+    translate([cake_x, cake_offset_y + frame_thickness / 2, base_height])
+        rotate([90, 0, 0])
+            cake();
+}
+
 if (part == "base") base();
 else if (part == "bike") bike();
-else { base(); standing_bike(); }
+else if (part == "cake") cake();
+else { base(); standing_bike(); standing_cake(); }
