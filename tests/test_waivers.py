@@ -53,7 +53,7 @@ def test_every_form_states_the_key_risks(tmp_path: Path, form: WaiverForm) -> No
 @pytest.mark.parametrize("form", FORMS, ids=[form.slug for form in FORMS])
 def test_every_form_has_the_race_and_a_place_to_sign(tmp_path: Path, form: WaiverForm) -> None:
     text = render(tmp_path, form)
-    assert "Открытая контрольная шоссейная тренировка" in text
+    assert "День рождения UBT" in text
     assert "4 октября 2026 года" in text
     assert "Подпись · Қолы" in text
     assert "Дата · Күні" in text

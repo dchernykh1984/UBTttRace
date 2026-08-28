@@ -18,7 +18,7 @@ from reportlab.pdfgen.canvas import Canvas
 from .background import draw_background, resolve_image
 from .brand import INK, MUTED, ORANGE
 from .draw import captioned_fill_line, centred_block, centred_string, fill_line
-from .fonts import SANS, SANS_BOLD, TITLE, register_fonts
+from .fonts import SANS, SANS_BOLD, TITLE, fit_size, register_fonts
 from .race import AWARDED_PLACES, RACE, AwardGroup, Bilingual, award_groups, place_title
 
 SPARE_CERTIFICATES = 3
@@ -45,6 +45,9 @@ class CertificateLayout:
     rule_y: float = 53 * mm
     rule_width: float = 70 * mm
     title_y: float = 68 * mm
+    title_size: float = 10.5
+    title_width: float = 160 * mm
+    """Сколько места между сторонами рамки остаётся названию гонки."""
     details_y: float = 85 * mm
     category_y: float = 102 * mm
     category_leading: float = 17
@@ -82,7 +85,16 @@ def draw_certificate(
         line_width=1.4,
         colour=ORANGE,
     )
-    centred_block(canvas, center, layout.top(layout.title_y), RACE.title.lines(), SANS, 10.5, 14)
+    # Название гонки живёт в race.py и может смениться: подбираем кегль,
+    # чтобы длинная строка не вылезла за рамку.
+    title_size = min(
+        fit_size(line, SANS, layout.title_width, layout.title_size, min_size=8)
+        for line in RACE.title.lines()
+    )
+    y = layout.top(layout.title_y)
+    for line in RACE.title.lines():
+        centred_string(canvas, center, y, line, SANS, title_size, INK)
+        y -= layout.title_size + 3.5
     centred_block(
         canvas,
         center,
