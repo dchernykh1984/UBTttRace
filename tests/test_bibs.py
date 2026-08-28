@@ -53,7 +53,13 @@ def test_digits_are_large_enough_to_read_from_the_roadside() -> None:
     layout = BibLayout()
     size = number_font_size(layout, 3)
     height = cap_height(NUMBER, size) * number_stretch(layout, size)
-    assert height / MM > 60
+    assert height / MM > 80
+
+
+def test_digits_start_no_closer_than_five_centimetres_from_the_fold() -> None:
+    # У подседельной трубы периметром 100 мм на каждый хвост уходит по 50 мм.
+    # Ближе цифры ставить нельзя — они окажутся на самой трубе.
+    assert BibLayout().wrap_allowance >= 50 * MM
 
 
 def test_wrap_allowance_covers_a_full_turn_around_the_seat_tube() -> None:
