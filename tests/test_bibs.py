@@ -5,12 +5,14 @@ from pathlib import Path
 import pytest
 from pypdf import PdfReader
 
+from ubt_race_docs import bibs
 from ubt_race_docs.bibs import (
     BibLayout,
     build_bibs,
     number_font_size,
     number_stretch,
 )
+from ubt_race_docs.brand import GIANT_ASPECT
 from ubt_race_docs.fonts import NUMBER, cap_height, text_width
 
 MM = 72 / 25.4
@@ -115,3 +117,29 @@ def test_logo_sits_on_the_fold(small_run: Path) -> None:
     assert PdfReader(small_run).pages[0].images
     layout = BibLayout()
     assert layout.logo_size + 2 * layout.logo_gap < 2 * layout.wrap_allowance
+
+
+def test_partner_logo_stays_inside_the_wrap(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    calls: list[tuple[float, float, float, float]] = []
+    monkeypatch.setattr(
+        bibs,
+        "draw_giant",
+        lambda canvas, x, y, width, angle: calls.append((x, y, width, angle)),
+    )
+    build_bibs(tmp_path / "bibs.pdf", first=1, last=1)
+
+    layout = BibLayout()
+    assert len(calls) == 2, "логотип партнёра нужен на обеих половинах"
+
+    # Верх логотипа смотрит вперёд — к сгибу, — поэтому углы зеркальные.
+    left, right = sorted(calls)
+    assert left[3] == -90
+    assert right[3] == 90
+    assert layout.center_x - left[0] == pytest.approx(right[0] - layout.center_x)
+
+    # Логотип лежит на трубе и не должен доставать до цифр.
+    half_thickness = layout.giant_width * GIANT_ASPECT / 2
+    assert right[0] + half_thickness < layout.center_x + layout.wrap_allowance
+    assert layout.giant_width < layout.strip_height - 2 * layout.top_margin

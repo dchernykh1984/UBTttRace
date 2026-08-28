@@ -22,7 +22,7 @@ from pathlib import Path
 from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
-from .brand import draw_logo
+from .brand import draw_giant, draw_logo
 from .draw import dashed_line, stretched_string
 from .fonts import NUMBER, cap_height, register_fonts, text_width
 from .race import RACE
@@ -43,6 +43,9 @@ class BibLayout:
     outer_margin: float = 6 * mm
     top_margin: float = 7 * mm
     bottom_margin: float = 7 * mm
+    giant_width: float = 58 * mm
+    """Логотип партнёра лежит вдоль трубы, поэтому это его длина по высоте полоски."""
+
     logo_size: float = 24 * mm
     """Логотип на сгибе: он ляжет прямо на подседельную трубу."""
 
@@ -118,7 +121,25 @@ def draw_strip(
         center = tail_left + layout.number_width / 2
         stretched_string(canvas, center, baseline, text, NUMBER, font_size, stretch)
 
+    draw_partner(canvas, strip_bottom, layout)
     draw_fold(canvas, strip_bottom, layout)
+
+
+def draw_partner(canvas: Canvas, strip_bottom: float, layout: BibLayout) -> None:
+    """Логотип партнёра в той части полоски, что обнимает подседельную трубу.
+
+    Он лежит вдоль трубы и повёрнут верхом вперёд, низом назад — как наклейка
+    на раме. Вперёд у обоих хвостов — в сторону сгиба, поэтому углы разные.
+    """
+    middle = strip_bottom + layout.strip_height / 2
+    for side, angle in ((-1, -90), (1, 90)):
+        draw_giant(
+            canvas,
+            layout.center_x + side * layout.wrap_allowance / 2,
+            middle,
+            layout.giant_width,
+            angle,
+        )
 
 
 def draw_fold(canvas: Canvas, strip_bottom: float, layout: BibLayout) -> None:
