@@ -49,22 +49,25 @@ wheel_overlap = 2;
 
 /* [Тортик] */
 // Гонка приурочена ко дню рождения команды, поэтому рядом с велосипедом
-// стоит тортик со свечкой — такой же плоской фигурой, только в своей плоскости.
-cake_width = 28;
-cake_base_height = 12;
-cake_top_width = 19;
-cake_top_height = 7;
-cake_drops = 4;
-cake_drop = 2;
-candle_width = 3;
-candle_height = 10;
-flame_width = 5;
-flame_height = 7.5;
-// Единственное место, где тортик виден целиком: просвет между колёсами.
-// Правее его закрывает переднее колесо, левее — заднее.
-cake_x = 7;
-bike_offset_y = 13;
-cake_offset_y = -13;
+// стоит круглый тортик со свечкой. В отличие от велосипеда это объёмная
+// фигура: плоский силуэт торта читался плохо.
+cake_diameter = 28;
+cake_height = 10;
+cake_top_diameter = 18;
+cake_top_height = 6;
+cake_fillet = 1.5;
+candle_diameter = 5;
+candle_top_diameter = 3.8;
+candle_height = 11;
+candle_collar = 1.2;
+flame_width = 4.4;
+flame_height = 8;
+cake_seat_depth = 3;
+// Тортик стоит у передней части велосипеда, в своей плоскости перед рамой:
+// так он не перекрывается колёсами и виден целиком.
+cake_x = 18;
+bike_offset_y = 15;
+cake_offset_y = -8;
 
 /* [Соединение] */
 foot_width = 14;
@@ -193,45 +196,41 @@ module wheel_logos() {
                         import(logo_file, center = true);
 }
 
-module cake_tier(width, height, y) {
-    half = width / 2;
-    translate([0, y])
-        hull() {
-            for (side = [-1, 1]) {
-                translate([side * (half - 2), 2]) circle(r = 2);
-                translate([side * (half - 2), height - 2]) circle(r = 2);
-            }
-        }
+// Ярус торта: цилиндр со скошенной верхней кромкой — и на глазурь похоже,
+// и печатается без нависаний.
+module cake_tier(diameter, height, fillet) {
+    rotate_extrude($fn = 72)
+        polygon([
+            [0, 0],
+            [diameter / 2, 0],
+            [diameter / 2, height - fillet],
+            [diameter / 2 - fillet, height],
+            [0, height],
+        ]);
 }
 
-module cake_profile() {
-    top = cake_base_height + cake_top_height;
-    cake_tier(cake_width, cake_base_height, 0);
-    cake_tier(cake_top_width, cake_top_height, cake_base_height);
-
-    // Капли крема по краю верхнего яруса; их чётное число, чтобы середина
-    // осталась свободной под свечку.
-    step = (cake_top_width - cake_drop) / cake_drops;
-    for (index = [0 : cake_drops - 1])
-        translate([-(cake_top_width - cake_drop - step) / 2 + index * step, top])
-            circle(r = cake_drop);
-
-    translate([-candle_width / 2, top]) square([candle_width, candle_height]);
+// Пламя каплей: заострено снизу и сверху, поэтому расширяется полого
+// и печатается без поддержек.
+module flame() {
     hull() {
-        translate([0, top + candle_height + flame_width / 2]) circle(d = flame_width);
-        translate([0, top + candle_height + flame_height]) circle(d = 0.8);
+        sphere(d = 1);
+        translate([0, 0, flame_height * 0.38]) sphere(d = flame_width);
+        translate([0, 0, flame_height]) sphere(d = 1);
     }
 }
 
-module cake_foot() {
-    translate([-foot_width / 2, -foot_sink]) square([foot_width, foot_sink + 4]);
+module candle() {
+    // Юбочка у основания снимает напряжение с самого тонкого места фигуры.
+    cylinder(d1 = candle_diameter + 1.5, d2 = candle_diameter, h = candle_collar);
+    cylinder(d1 = candle_diameter, d2 = candle_top_diameter, h = candle_height);
+    translate([0, 0, candle_height]) flame();
 }
 
 module cake() {
-    linear_extrude(height = frame_thickness) {
-        cake_profile();
-        cake_foot();
-    }
+    $fn = 48;
+    cake_tier(cake_diameter, cake_height, cake_fillet);
+    translate([0, 0, cake_height]) cake_tier(cake_top_diameter, cake_top_height, cake_fillet);
+    translate([0, 0, cake_height + cake_top_height]) candle();
 }
 
 module rounded_plinth() {
@@ -293,7 +292,13 @@ module socket_at(x, y) {
 module bike_sockets() {
     for (x = [rear_axle[0], front_axle[0]])
         socket_at(x + bike_shift(), bike_offset_y);
-    socket_at(cake_x, cake_offset_y);
+}
+
+// Тортик не на шипе, а в неглубоком гнезде: так он печатается плоским дном
+// вниз, без опоры под нависанием.
+module cake_socket() {
+    translate([cake_x, cake_offset_y, base_height - cake_seat_depth])
+        cylinder(d = cake_diameter + socket_clearance, h = cake_seat_depth + 1, $fn = 72);
 }
 
 module base() {
@@ -302,6 +307,7 @@ module base() {
         engraved_text();
         engraved_logos();
         bike_sockets();
+        cake_socket();
     }
 }
 
@@ -312,9 +318,7 @@ module standing_bike() {
 }
 
 module standing_cake() {
-    translate([cake_x, cake_offset_y + frame_thickness / 2, base_height])
-        rotate([90, 0, 0])
-            cake();
+    translate([cake_x, cake_offset_y, base_height - cake_seat_depth]) cake();
 }
 
 if (part == "base") base();

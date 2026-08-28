@@ -1,5 +1,6 @@
 """Проверки модели кубка и параметров, которые уходят в openscad."""
 
+import math
 import re
 import shutil
 import subprocess
@@ -253,20 +254,43 @@ def test_cake_is_cut_as_its_own_part() -> None:
     assert plan["trophy-cake.stl"].definitions == {}, "гравировки на тортике нет"
 
 
-def test_cake_stands_in_its_own_plane() -> None:
-    # Тортик стоит перед велосипедом, в своей плоскости: детали плоские
-    # и не должны задевать друг друга.
-    gap = abs(model_number("bike_offset_y") - model_number("cake_offset_y"))
-    assert gap > model_number("frame_thickness")
+def test_cake_stands_clear_of_the_bike() -> None:
+    # Тортик объёмный: между его боком и плоскостью велосипеда нужен зазор.
+    bike_face = model_number("bike_offset_y") - model_number("frame_thickness") / 2
+    cake_edge = model_number("cake_offset_y") + model_number("cake_diameter") / 2
+    assert cake_edge < bike_face
 
 
 def test_cake_fits_the_depth_of_the_plinth() -> None:
-    for offset in (model_number("bike_offset_y"), model_number("cake_offset_y")):
-        edge = abs(offset) + model_number("frame_thickness") / 2
-        assert edge < model_number("base_depth") / 2, "фигура свисает с подставки"
+    bike_edge = abs(model_number("bike_offset_y")) + model_number("frame_thickness") / 2
+    assert bike_edge < model_number("base_depth") / 2, "велосипед свисает с подставки"
+    cake_edge = abs(model_number("cake_offset_y")) + model_number("cake_diameter") / 2
+    assert cake_edge < model_number("base_depth") / 2, "тортик свисает с подставки"
+
+
+def test_cake_fits_the_length_of_the_plinth() -> None:
+    edge = abs(model_number("cake_x")) + model_number("cake_diameter") / 2
+    assert edge < model_number("base_length") / 2
+
+
+def test_cake_narrows_towards_the_top() -> None:
+    # Иначе верхний ярус не читается как торт.
+    assert model_number("cake_top_diameter") < model_number("cake_diameter")
+    assert model_number("candle_diameter") < model_number("cake_top_diameter")
 
 
 def test_candle_is_thick_enough_to_survive() -> None:
-    # Свечка — самая тонкая часть кубка; в плоской фигуре её держит толщина.
-    assert model_number("candle_width") >= 2.5
-    assert model_number("candle_width") * model_number("frame_thickness") > 20
+    # Свечка — самая тонкая часть кубка, и держит её только собственный
+    # диаметр: подпереть её нечем.
+    diameter = model_number("candle_diameter")
+    assert diameter >= 4
+    assert math.pi * diameter**2 / 4 > 12, "сечение свечки слишком мало"
+    assert model_number("candle_height") < 3 * diameter, "слишком длинный рычаг"
+
+
+def test_cake_sits_in_a_socket_it_can_be_printed_flat_on() -> None:
+    # Гнездо, а не шип: с шипом деталь пришлось бы печатать на пятачке.
+    source = MODEL_PATH.read_text(encoding="utf-8")
+    assert "module cake_socket()" in source
+    assert "cake_seat_depth" in source
+    assert model_number("cake_seat_depth") < model_number("base_height") / 4
