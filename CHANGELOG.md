@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.7.0...v0.8.0) (2026-08-28)
+
+
+### Новое
+
+* print certificates for the age groups ([d061ad1](https://github.com/dchernykh1984/UBTttRace/commit/d061ad102de6792a245e3f8aeaa83a3e5e2939c5))
+
 ## [0.7.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.6.1...v0.7.0) (2026-08-22)
 
 
