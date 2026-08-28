@@ -99,6 +99,59 @@ AWARDED_PLACES: tuple[int, ...] = (1, 2, 3)
 """Места, за которые вручаются грамоты (по положению — первая тройка)."""
 
 
+@dataclass(frozen=True, slots=True)
+class AgeGroup:
+    """Возрастная группа внутри пола."""
+
+    code: str
+    name: Bilingual
+
+
+AGE_GROUPS: tuple[AgeGroup, ...] = (
+    AgeGroup("1991", Bilingual("2011–1991 г.р.", "2011–1991 ж.т.")),
+    AgeGroup("1981", Bilingual("1990–1981 г.р.", "1990–1981 ж.т.")),
+    AgeGroup("1971", Bilingual("1980–1971 г.р.", "1980–1971 ж.т.")),
+    AgeGroup("1970", Bilingual("1970 г.р. и старше", "1970 ж.т. және одан үлкен")),
+)
+
+ABSOLUTE = Bilingual("абсолют", "абсолют")
+"""Зачёт без деления по возрасту — в нём же разыгрываются кубки."""
+
+
+@dataclass(frozen=True, slots=True)
+class AwardGroup:
+    """Зачёт, в котором вручаются грамоты: пол плюс возрастная группа."""
+
+    category: Category
+    age_group: AgeGroup | None = None
+
+    @property
+    def code(self) -> str:
+        return f"{self.category.code}-{self.age_group.code if self.age_group else 'absolute'}"
+
+    @property
+    def title(self) -> Bilingual:
+        """Как зачёт подписан на грамоте."""
+        group = self.age_group.name if self.age_group else ABSOLUTE
+        return Bilingual(
+            f"{self.category.name.ru}, {group.ru}",
+            f"{self.category.name.kk}, {group.kk}",
+        )
+
+
+def award_groups() -> tuple[AwardGroup, ...]:
+    """Все зачёты, в которых вручаются грамоты.
+
+    По положению — первая тройка в абсолюте отдельно у мужчин и у женщин
+    и первая тройка в каждой возрастной группе.
+    """
+    return tuple(
+        AwardGroup(category=category, age_group=age_group)
+        for category in CATEGORIES
+        for age_group in (None, *AGE_GROUPS)
+    )
+
+
 def place_title(place: int) -> Bilingual:
     """Подпись места: «1 место» / «1-орын»."""
     if place < 1:

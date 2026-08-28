@@ -13,7 +13,8 @@ from ubt_race_docs.certificates import (
     CertificateLayout,
     build_certificates,
 )
-from ubt_race_docs.race import RACE
+from ubt_race_docs.fonts import SANS_BOLD, text_width
+from ubt_race_docs.race import AWARDED_PLACES, RACE, award_groups
 
 
 @pytest.fixture(scope="module")
@@ -31,8 +32,9 @@ def test_every_sheet_is_printed_on_the_branded_background(certificates: Path) ->
         assert page.images, "на листе нет водяного знака — значит нет и фона"
 
 
-def test_podium_of_both_categories_plus_spares(pages: list[str]) -> None:
-    assert len(pages) == 2 * 3 + SPARE_CERTIFICATES
+def test_podium_of_every_award_group_plus_spares(pages: list[str]) -> None:
+    # Первая тройка в абсолюте и в каждой возрастной группе, у мужчин и женщин.
+    assert len(pages) == len(award_groups()) * len(AWARDED_PLACES) + SPARE_CERTIFICATES
 
 
 def test_every_sheet_is_a_certificate_of_this_race(pages: list[str]) -> None:
@@ -46,15 +48,30 @@ def test_every_sheet_is_a_certificate_of_this_race(pages: list[str]) -> None:
         assert RACE.url not in page
 
 
-def test_categories_and_places_are_pre_printed(pages: list[str]) -> None:
+def test_groups_and_places_are_pre_printed(pages: list[str]) -> None:
     printed = [
-        (category, place)
-        for category in ("Мужчины · Ерлер", "Женщины · Әйелдер")
+        (group, place)
+        for group in award_groups()
         for place in ("1 место · 1-орын", "2 место · 2-орын", "3 место · 3-орын")
     ]
-    for page, (category, place) in zip(pages, printed, strict=False):
-        assert category in page
+    for page, (group, place) in zip(pages, printed, strict=False):
+        assert group.title.ru in page, f"нет зачёта {group.title.ru}"
+        assert group.title.kk in page
         assert place in page
+
+
+def test_age_groups_are_all_covered(pages: list[str]) -> None:
+    printed = "\n".join(pages)
+    for group in award_groups():
+        assert printed.count(group.title.ru) == len(AWARDED_PLACES)
+
+
+def test_group_title_fits_the_certificate() -> None:
+    layout = CertificateLayout()
+    widest = max(
+        text_width(line, SANS_BOLD, 14) for group in award_groups() for line in group.title.lines()
+    )
+    assert widest < layout.field_width
 
 
 def test_chief_referee_is_printed_above_the_line(pages: list[str]) -> None:
@@ -78,8 +95,9 @@ def test_name_and_result_are_always_left_blank(pages: list[str]) -> None:
 
 
 def test_spare_sheets_have_nothing_filled_in(pages: list[str]) -> None:
+    assert SPARE_CERTIFICATES == 3
     for page in pages[-SPARE_CERTIFICATES:]:
-        assert "Категория · Санаты" in page
+        assert "Зачёт · Сынып" in page
         assert "Место · Орны" in page
         assert "Мужчины" not in page
         assert "1 место" not in page
@@ -93,7 +111,7 @@ def test_filled_sheets_have_no_empty_category_line(pages: list[str]) -> None:
 
 def test_spares_can_be_switched_off(tmp_path: Path) -> None:
     output = build_certificates(tmp_path / "certificates.pdf", spare=0)
-    assert len(PdfReader(output).pages) == 6
+    assert len(PdfReader(output).pages) == len(award_groups()) * len(AWARDED_PLACES)
 
 
 def test_negative_spare_count_is_rejected(tmp_path: Path) -> None:

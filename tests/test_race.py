@@ -3,10 +3,12 @@
 import pytest
 
 from ubt_race_docs.race import (
+    AGE_GROUPS,
     AWARDED_PLACES,
     CATEGORIES,
     RACE,
     Bilingual,
+    award_groups,
     place_title,
 )
 
@@ -59,3 +61,30 @@ def test_prize_rules_match_the_regulations() -> None:
 
 def test_certificates_cover_the_podium() -> None:
     assert AWARDED_PLACES == (1, 2, 3)
+
+
+def test_age_groups_match_the_regulations() -> None:
+    # По положению — четыре возрастные группы, одинаковые у мужчин и у женщин.
+    assert len(AGE_GROUPS) == 4
+    codes = [group.code for group in AGE_GROUPS]
+    assert len(set(codes)) == len(codes)
+    for group in AGE_GROUPS:
+        assert "г.р." in group.name.ru
+        assert group.name.kk != group.name.ru
+
+
+def test_every_category_is_awarded_in_absolute_and_by_age() -> None:
+    groups = award_groups()
+    assert len(groups) == len(CATEGORIES) * (1 + len(AGE_GROUPS))
+    assert len({group.code for group in groups}) == len(groups)
+
+    absolute = [group for group in groups if group.age_group is None]
+    assert [group.category for group in absolute] == list(CATEGORIES)
+    assert absolute[0].title.ru == "Мужчины, абсолют"
+    assert absolute[0].title.kk == "Ерлер, абсолют"
+
+
+def test_age_group_title_names_both_the_sex_and_the_years() -> None:
+    group = next(group for group in award_groups() if group.code == "women-1970")
+    assert group.title.ru == "Женщины, 1970 г.р. и старше"
+    assert group.title.kk == "Әйелдер, 1970 ж.т. және одан үлкен"
