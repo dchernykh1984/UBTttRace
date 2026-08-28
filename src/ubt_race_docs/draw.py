@@ -6,9 +6,6 @@
 
 from __future__ import annotations
 
-from reportlab.graphics import renderPDF
-from reportlab.graphics.barcode.qr import QrCodeWidget
-from reportlab.graphics.shapes import Drawing
 from reportlab.lib import colors
 from reportlab.pdfgen.canvas import Canvas
 
@@ -144,16 +141,3 @@ def captioned_fill_line(
     """Линейка для заполнения с мелкой подписью под ней."""
     fill_line(canvas, x_center - width / 2, y, width)
     centred_string(canvas, x_center, y - gap - size * 0.8, caption, font, size, GREY)
-
-
-def qr_code(canvas: Canvas, x: float, y: float, size: float, url: str) -> None:
-    """QR-код со ссылкой, левым нижним углом в точке (x, y)."""
-    widget = QrCodeWidget(url, barLevel="M", barBorder=0)
-    left, bottom, right, top = widget.getBounds()
-    drawing = Drawing(
-        size,
-        size,
-        transform=[size / (right - left), 0, 0, size / (top - bottom), 0, 0],
-    )
-    drawing.add(widget)
-    renderPDF.draw(drawing, canvas, x, y)

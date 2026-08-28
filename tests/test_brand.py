@@ -8,7 +8,6 @@ from reportlab.lib import colors
 from reportlab.pdfgen.canvas import Canvas
 
 from ubt_race_docs.brand import BLUE, GREEN, INK, LOGO_PATH, ORANGE, PAPER, draw_logo
-from ubt_race_docs.draw import qr_code
 
 MM = 72 / 25.4
 
@@ -39,16 +38,6 @@ def test_logo_lands_on_the_page(tmp_path: Path) -> None:
     canvas.showPage()
     canvas.save()
     assert len(PdfReader(output).pages[0].images) == 1
-
-
-def test_qr_code_is_drawn_and_stays_in_its_box(tmp_path: Path) -> None:
-    output = tmp_path / "qr.pdf"
-    canvas = Canvas(str(output))
-    qr_code(canvas, 20, 30, 22 * MM, "https://universalbicycle.team/calendar/533/")
-    canvas.showPage()
-    canvas.save()
-    assert PdfReader(output).pages[0].extract_text() == ""
-    assert output.stat().st_size > 1000
 
 
 def test_logo_has_a_transparent_background() -> None:
