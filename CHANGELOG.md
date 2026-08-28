@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.9.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.8.1...v0.9.0) (2026-08-28)
+
+
+### Новое
+
+* add the giant logo to the certificates ([2ce481b](https://github.com/dchernykh1984/UBTttRace/commit/2ce481bd4d1560fd1880c3fe15a378a45b6546f8))
+* engrave the giant logo on the trophy ([9a049f3](https://github.com/dchernykh1984/UBTttRace/commit/9a049f3668f910917bad91ace4e34319180bc814))
+* enlarge the bib digits ([f086417](https://github.com/dchernykh1984/UBTttRace/commit/f086417c0157451d0f7775d273f0acf48b4a17cd))
+* put the giant logo on the bib wrap ([f1c8aa9](https://github.com/dchernykh1984/UBTttRace/commit/f1c8aa9b899b8dceb5ae3416f503dc22d4322a1e))
+
+
+### Документация
+
+* describe the partner logo on the print kit ([d7f6c1b](https://github.com/dchernykh1984/UBTttRace/commit/d7f6c1bc9861ae0b235928558b4d0b2277ec75a4))
+
+
+### Рефакторинг
+
+* strip the qr code and wordmark from the bib numbers ([0a82abb](https://github.com/dchernykh1984/UBTttRace/commit/0a82abbb92868877a4a99387fc7e17719e421568))
+
 ## [0.8.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.8.0...v0.8.1) (2026-08-28)
 
 
