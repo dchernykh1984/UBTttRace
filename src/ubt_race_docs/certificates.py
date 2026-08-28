@@ -1,9 +1,10 @@
 """Грамоты призёрам.
 
-Каждая грамота — отдельный лист A4. Категория и место напечатаны заранее
-(по положению награждается первая тройка у мужчин и у женщин), от руки на месте
-вписываются фамилия, имя и результат. Плюс запасные бланки, где не заполнено
-вообще ничего — на случай, если категорию или место придётся написать другие.
+Каждая грамота — отдельный лист A4. Зачёт и место напечатаны заранее: по
+положению награждается первая тройка в абсолюте отдельно у мужчин и у женщин
+и первая тройка в каждой возрастной группе. От руки на месте вписываются
+фамилия, имя и результат. Плюс запасные бланки, где не заполнено вообще
+ничего — на случай, если зачёт или место придётся написать другие.
 """
 
 from __future__ import annotations
@@ -18,13 +19,13 @@ from .background import draw_background, resolve_image
 from .brand import INK, MUTED, ORANGE
 from .draw import captioned_fill_line, centred_block, centred_string, fill_line
 from .fonts import SANS, SANS_BOLD, TITLE, register_fonts
-from .race import AWARDED_PLACES, CATEGORIES, RACE, Bilingual, Category, place_title
+from .race import AWARDED_PLACES, RACE, AwardGroup, Bilingual, award_groups, place_title
 
-SPARE_CERTIFICATES = 2
+SPARE_CERTIFICATES = 3
 
 HEADING = "ГРАМОТА"
 AWARDED_TO = Bilingual("Награждается", "Марапатталады")
-CATEGORY_CAPTION = Bilingual("Категория", "Санаты")
+CATEGORY_CAPTION = Bilingual("Зачёт", "Сынып")
 PLACE_CAPTION = Bilingual("Место", "Орны")
 SURNAME_CAPTION = Bilingual("Фамилия", "Тегі")
 NAME_CAPTION = Bilingual("Имя", "Аты")
@@ -45,7 +46,8 @@ class CertificateLayout:
     rule_width: float = 70 * mm
     title_y: float = 68 * mm
     details_y: float = 85 * mm
-    category_y: float = 104 * mm
+    category_y: float = 102 * mm
+    category_leading: float = 17
     place_y: float = 122 * mm
     awarded_y: float = 141 * mm
     surname_y: float = 163 * mm
@@ -63,11 +65,11 @@ class CertificateLayout:
 def draw_certificate(
     canvas: Canvas,
     layout: CertificateLayout,
-    category: Category | None = None,
+    group: AwardGroup | None = None,
     place: int | None = None,
     background: Path | None = None,
 ) -> None:
-    """Нарисовать одну грамоту. Пустые `category` и `place` — запасной бланк."""
+    """Нарисовать одну грамоту. Пустые `group` и `place` — запасной бланк."""
     center = layout.page_width / 2
     draw_background(canvas, layout.page_width, layout.page_height, image=background)
 
@@ -95,7 +97,7 @@ def draw_certificate(
         MUTED,
     )
 
-    if category is None:
+    if group is None:
         captioned_fill_line(
             canvas,
             center,
@@ -106,8 +108,17 @@ def draw_certificate(
             9,
         )
     else:
-        centred_string(
-            canvas, center, layout.top(layout.category_y), category.name.one_line(), SANS_BOLD, 17
+        # Названия зачётов длинные («Мужчины, 1970 г.р. и старше»), поэтому
+        # русская и казахская строки идут одна под другой, а не через точку.
+        centred_block(
+            canvas,
+            center,
+            layout.top(layout.category_y),
+            group.title.lines(),
+            SANS_BOLD,
+            14,
+            layout.category_leading,
+            INK,
         )
 
     if place is None:
@@ -183,9 +194,9 @@ def build_certificates(
     canvas.setAuthor(RACE.organizer)
     canvas.setSubject(RACE.title.ru)
 
-    for category in CATEGORIES:
+    for group in award_groups():
         for place in AWARDED_PLACES:
-            draw_certificate(canvas, layout, category, place, background=image)
+            draw_certificate(canvas, layout, group, place, background=image)
             canvas.showPage()
 
     for _ in range(spare):
