@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.10.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.9.0...v0.10.0) (2026-08-28)
+
+
+### Новое
+
+* cut the trophy cake into its own stl ([8392e60](https://github.com/dchernykh1984/UBTttRace/commit/8392e603c811f211ecf4e6ece86fdaf169842cb6))
+* stand a birthday cake beside the trophy bike ([4f69fef](https://github.com/dchernykh1984/UBTttRace/commit/4f69fef49b488c14c3a094b8234a887e324fff4b))
+
+
+### Документация
+
+* describe the birthday cake on the trophy ([e593a5d](https://github.com/dchernykh1984/UBTttRace/commit/e593a5d3f8fe61e4eb21c5ea7aeb5828ad3a6725))
+
 ## [0.9.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.8.1...v0.9.0) (2026-08-28)
 
 
