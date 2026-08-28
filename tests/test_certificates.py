@@ -8,6 +8,7 @@ from pypdf import PdfReader
 from reportlab.lib.units import mm
 
 from ubt_race_docs.background import BackgroundStyle
+from ubt_race_docs.brand import GIANT_ASPECT
 from ubt_race_docs.certificates import (
     SPARE_CERTIFICATES,
     CertificateLayout,
@@ -30,6 +31,21 @@ def pages(certificates: Path) -> list[str]:
 def test_every_sheet_is_printed_on_the_branded_background(certificates: Path) -> None:
     for page in PdfReader(certificates).pages:
         assert page.images, "на листе нет водяного знака — значит нет и фона"
+
+
+def test_partner_logo_is_printed_in_the_footer(certificates: Path) -> None:
+    # На листе два изображения: водяной знак UBT и логотип партнёра.
+    for page in PdfReader(certificates).pages:
+        assert len(page.images) == 2
+
+
+def test_partner_logo_sits_between_the_signature_and_the_footer() -> None:
+    layout = CertificateLayout()
+    style = BackgroundStyle()
+    giant_bottom = layout.page_height - layout.giant_y - layout.giant_width * GIANT_ASPECT / 2
+    assert giant_bottom > layout.page_height - layout.footer_y, "логотип наезжает на подвал"
+    assert layout.giant_y > layout.signature_y + 8 * mm, "логотип наезжает на подпись судьи"
+    assert giant_bottom > style.frame_margin + style.frame_inset
 
 
 def test_podium_of_every_award_group_plus_spares(pages: list[str]) -> None:
@@ -135,10 +151,9 @@ def test_own_picture_replaces_the_drawn_background(tmp_path: Path) -> None:
 
     output = build_certificates(tmp_path / "certificates.pdf", spare=0, background=picture)
     images = PdfReader(output).pages[0].images
-    assert len(images) == 1, "поверх своей картинки водяной знак уже не нужен"
-    embedded = images[0].image
-    assert embedded is not None
-    assert embedded.size == (400, 560)
+    assert len(images) == 2, "своя картинка и логотип партнёра; водяного знака нет"
+    sizes = {image.image.size for image in images if image.image is not None}
+    assert (400, 560) in sizes, f"своей картинки на листе нет, только {sizes}"
 
 
 def test_missing_background_is_reported(tmp_path: Path) -> None:
