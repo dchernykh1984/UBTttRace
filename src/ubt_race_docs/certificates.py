@@ -16,7 +16,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen.canvas import Canvas
 
 from .background import draw_background, resolve_image
-from .brand import INK, MUTED, ORANGE
+from .brand import INK, MUTED, ORANGE, draw_giant
 from .draw import captioned_fill_line, centred_block, centred_string, fill_line
 from .fonts import SANS, SANS_BOLD, TITLE, fit_size, register_fonts
 from .race import AWARDED_PLACES, RACE, AwardGroup, Bilingual, award_groups, place_title
@@ -58,6 +58,8 @@ class CertificateLayout:
     result_y: float = 207 * mm
     signature_y: float = 243 * mm
     signature_width: float = 60 * mm
+    giant_y: float = 257 * mm
+    giant_width: float = 34 * mm
     footer_y: float = 266 * mm
 
     def top(self, offset: float) -> float:
@@ -171,6 +173,8 @@ def draw_certificate(
     centred_string(canvas, center, signature + 5, RACE.chief_referee, SANS, 12.5, INK)
     fill_line(canvas, center - layout.signature_width / 2, signature, layout.signature_width)
     centred_string(canvas, center, signature - 12, REFEREE_CAPTION.one_line(), SANS, 9, MUTED)
+    # Логотип партнёра гонки — над подписью организатора, как на джерси.
+    draw_giant(canvas, center, layout.top(layout.giant_y), layout.giant_width)
     centred_block(
         canvas,
         center,
