@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.8.0...v0.8.1) (2026-08-28)
+
+
+### Исправления
+
+* rename the race after the calendar page ([99016a9](https://github.com/dchernykh1984/UBTttRace/commit/99016a908896aa10fe99fa01684158dbbe9eb00d))
+
 ## [0.8.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.7.0...v0.8.0) (2026-08-28)
 
 
