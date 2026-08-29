@@ -137,7 +137,7 @@ def test_logo_is_traced_next_to_the_model() -> None:
     assert "<svg" in logo.read_text(encoding="utf-8")
 
 
-LOGO_SOURCE_WIDTH = 99.92
+LOGO_SOURCE_WIDTH = 99.95
 """Ширина контура в `ubt-logo.svg`: с ней он импортируется в OpenSCAD."""
 
 

@@ -19,7 +19,7 @@ font_name = "DejaVu Sans:style=Bold";
 logo_file = "ubt-logo.svg";
 giant_file = "giant-logo.svg";
 // Ширина обоих контуров в файлах — 100 единиц, высота у каждого своя.
-logo_source_height = 129.4;
+logo_source_height = 116.1;
 giant_source_width = 99.81;
 
 text_size = 4.0;
