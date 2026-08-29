@@ -40,6 +40,15 @@ class BackgroundStyle:
 
     corner_width: float = 2.4
     watermark_size: float = 90 * mm
+
+    watermark_drop: float = 39.5 * mm
+    """Насколько знак опущен ниже центра листа.
+
+    По центру его верх уходил под крупную строку с местом и группой, а низ
+    листа оставался пустым. Опущенный знак заканчивается чуть выше подписи
+    главного судьи и заполняет поля для фамилии, имени и результата.
+    """
+
     watermark_alpha: float = 0.2
     """Логотип должен читаться, но не мешать писать поверх него.
 
@@ -81,7 +90,7 @@ def draw_branded_background(
 
     canvas.saveState()
     canvas.setFillAlpha(style.watermark_alpha)
-    draw_logo(canvas, width / 2, height / 2, style.watermark_size)
+    draw_logo(canvas, width / 2, height / 2 - style.watermark_drop, style.watermark_size)
     canvas.restoreState()
 
 
