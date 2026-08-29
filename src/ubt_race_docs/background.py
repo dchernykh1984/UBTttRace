@@ -40,8 +40,12 @@ class BackgroundStyle:
 
     corner_width: float = 2.4
     watermark_size: float = 90 * mm
-    watermark_alpha: float = 0.07
-    """Логотип должен угадываться, но не мешать читать текст."""
+    watermark_alpha: float = 0.2
+    """Логотип должен читаться, но не мешать писать поверх него.
+
+    На бумаге водяной знак выходит бледнее, чем на экране, поэтому берём
+    заметно больше той доли, при которой он ещё читается в PDF.
+    """
 
 
 def draw_image_background(canvas: Canvas, width: float, height: float, image: Path) -> None:
