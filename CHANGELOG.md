@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.2](https://github.com/dchernykh1984/UBTttRace/compare/v0.12.1...v0.12.2) (2026-08-29)
+
+
+### Исправления
+
+* drop the certificate watermark below the headline ([f2e79cb](https://github.com/dchernykh1984/UBTttRace/commit/f2e79cbc73162cf6c6e52662dbe03fbe00eb35b6))
+
 ## [0.12.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.12.0...v0.12.1) (2026-08-29)
 
 
