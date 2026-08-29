@@ -56,7 +56,9 @@ def test_corners_do_not_meet_in_the_middle_of_a_side() -> None:
 
 
 def test_watermark_is_faint_enough_to_write_over() -> None:
-    assert 0 < BackgroundStyle().watermark_alpha <= 0.15
+    # Знак должен быть виден на печати, но оставаться фоном: поверх него
+    # от руки вписывают фамилию, имя и результат.
+    assert 0.1 <= BackgroundStyle().watermark_alpha <= 0.25
 
 
 def test_background_draws_something(tmp_path: Path) -> None:
