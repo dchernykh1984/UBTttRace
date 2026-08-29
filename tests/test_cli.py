@@ -15,6 +15,7 @@ def test_all_builds_the_whole_print_kit(tmp_path: Path) -> None:
     assert produced == [
         "bib-numbers-1-4.pdf",
         "certificates.pdf",
+        "map.png",
         "prize-money.xlsx",
         "waiver-adult.pdf",
         "waiver-minor.pdf",
