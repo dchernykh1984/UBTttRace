@@ -43,7 +43,7 @@ make install
 внутри проекта (она в `.gitignore`, в репозиторий ничего не попадает):
 
 ```bash
-make build     # все документы сразу: номера, грамоты, расписки, таблица призовых
+make build     # все документы сразу: номера, грамоты, расписки, таблица призовых, карта
 make kit       # то же самое плюс STL кубков (нужен openscad)
 ```
 
@@ -56,6 +56,7 @@ make kit       # то же самое плюс STL кубков (нужен open
 | `make waivers` | `waiver-adult.pdf`, `waiver-minor.pdf` |
 | `make workbook` | `prize-money.xlsx` |
 | `make models` | `trophy-*.stl` (нужен openscad) |
+| `make map` | `map.png` — карта трассы в цветах партнёра |
 
 `make clean` удаляет `dist/` и кэши.
 
@@ -98,6 +99,7 @@ src/ubt_race_docs/
     prizes.py          распределение призового фонда по положению
     workbook.py        книга Excel с живыми формулами
     trophies.py        запуск openscad для кубков
+    route_map.py       карта трассы в цветах партнёра
     cli.py             командная строка
     background.py      фон печатного листа
     brand.py           цвета команды и логотип
