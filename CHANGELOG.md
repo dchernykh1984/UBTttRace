@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.12.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.11.0...v0.12.0) (2026-08-29)
+
+
+### Новое
+
+* put the current team logo on every printed item ([5db4767](https://github.com/dchernykh1984/UBTttRace/commit/5db476761ac1ee3f8fbacb52f60eea1c4d3f3245))
+
+
+### Документация
+
+* note where the logo assets come from ([3c3b153](https://github.com/dchernykh1984/UBTttRace/commit/3c3b1530a9269dc7c55c0007f59262c0cc042f42))
+
 ## [0.11.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.10.0...v0.11.0) (2026-08-28)
 
 
