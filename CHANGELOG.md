@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.12.0...v0.12.1) (2026-08-29)
+
+
+### Исправления
+
+* make the certificate watermark visible on paper ([2baae9c](https://github.com/dchernykh1984/UBTttRace/commit/2baae9cacc661b653c6f67567fb34bdfb56da3d0))
+
 ## [0.12.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.11.0...v0.12.0) (2026-08-29)
 
 
