@@ -61,6 +61,14 @@ def test_watermark_is_faint_enough_to_write_over() -> None:
     assert 0.1 <= BackgroundStyle().watermark_alpha <= 0.25
 
 
+def test_watermark_sits_low_but_inside_the_frame() -> None:
+    # Знак опущен под крупный текст, но не должен налезать на рамку.
+    style = BackgroundStyle()
+    bottom = HEIGHT / 2 - style.watermark_drop - style.watermark_size / 2
+    assert style.watermark_drop > 0
+    assert bottom > style.frame_margin + style.frame_inset
+
+
 def test_background_draws_something(tmp_path: Path) -> None:
     empty = tmp_path / "empty.pdf"
     canvas = Canvas(str(empty), pagesize=(WIDTH, HEIGHT))
