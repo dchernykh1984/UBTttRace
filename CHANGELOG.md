@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.13.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.12.2...v0.13.0) (2026-08-29)
+
+
+### Новое
+
+* build the route map from the command line ([08b8442](https://github.com/dchernykh1984/UBTttRace/commit/08b844221d03b52d556b4dac4e06e2f02e88672a))
+* draw the route map in the partner colours ([f8478be](https://github.com/dchernykh1984/UBTttRace/commit/f8478be83e5ba5690f999bb518b9c32471731006))
+
+
+### Документация
+
+* describe the route map ([ebbade8](https://github.com/dchernykh1984/UBTttRace/commit/ebbade81dabdcb1540ce1bf1d037c618baa8ede7))
+
 ## [0.12.2](https://github.com/dchernykh1984/UBTttRace/compare/v0.12.1...v0.12.2) (2026-08-29)
 
 
