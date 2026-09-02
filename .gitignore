@@ -17,6 +17,10 @@ venv*/
 .ruff_cache/
 .mypy_cache/
 
+# Настройки Claude Code: общие правила и скиллы лежат в репозитории,
+# личные разрешения каждого — нет
+.claude/settings.local.json
+
 # macOS
 .DS_Store
 
