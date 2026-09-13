@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.16.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.15.2...v0.16.0) (2026-09-13)
+
+
+### Новое
+
+* add a jockey wheel scraper medal ([d6f2094](https://github.com/dchernykh1984/UBTttRace/commit/d6f2094c9c0d65e8e2c93037175663eee197ac23))
+* build the branded instruments from the command line ([c0ec411](https://github.com/dchernykh1984/UBTttRace/commit/c0ec411ed59272e92ccc2e72ebf72e26b91488d4))
+* engrave the race on ready-made bike tools ([15cd896](https://github.com/dchernykh1984/UBTttRace/commit/15cd8965aae241c2c6f669acbf6c6a023a842132))
+
+
+### Исправления
+
+* keep the vendor tool models in the repository ([09ed539](https://github.com/dchernykh1984/UBTttRace/commit/09ed539443919905c63d43cdfd8b390992b75a03))
+* move the scraper slot clear of the medal engraving ([745318b](https://github.com/dchernykh1984/UBTttRace/commit/745318b37d2c2a599fb981669ff846b3b03574de))
+* take the key spline from real tool models ([ce1cf94](https://github.com/dchernykh1984/UBTttRace/commit/ce1cf941dd2820d3b98cba46ea4921ff7b4fa421))
+
+
+### Документация
+
+* describe the new medal and the branded tools ([43cc51c](https://github.com/dchernykh1984/UBTttRace/commit/43cc51cbad2f82b36c73e1a69771d666552ce73d))
+
 ## [0.15.2](https://github.com/dchernykh1984/UBTttRace/compare/v0.15.1...v0.15.2) (2026-09-13)
 
 
