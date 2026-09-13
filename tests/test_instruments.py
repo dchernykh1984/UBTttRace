@@ -54,6 +54,43 @@ def model_point(name: str) -> tuple[float, float]:
     return float(match.group(1)), float(match.group(2))
 
 
+def model_line(name: str) -> str:
+    match = re.search(rf'^{name} = "(.*)";', MODEL_PATH.read_text(encoding="utf-8"), re.M)
+    assert match is not None, f"в модели нет параметра {name}"
+    return match.group(1)
+
+
+def test_ruler_engraving_sits_on_one_line_without_overlaps() -> None:
+    # На планке всё выстроено по её середине: эмблема, строка, партнёр.
+    from ubt_race_docs.fonts import SANS_BOLD, text_width
+
+    ascent = 0.7598
+    text_x, text_y = model_point("chain_text_at")
+    logo_x, logo_y = model_point("chain_logo_at")
+    giant_x, giant_y = model_point("chain_giant_at")
+    assert text_y == logo_y == giant_y, "элементы не на одной линии"
+
+    half_text = (
+        text_width(model_line("title_line"), SANS_BOLD, model_number("chain_text_size") / ascent)
+        / 2
+    )
+    half_logo = model_number("chain_logo_height") * 99.95 / 116.1 / 2
+    half_giant = model_number("chain_giant_width") / 2
+    assert logo_x + half_logo < text_x - half_text, "эмблема налезает на строку"
+    assert text_x + half_text < giant_x - half_giant, "логотип партнёра налезает на дату"
+    assert giant_x + half_giant < 140, "логотип партнёра уходит на щуп"
+
+
+def test_cassette_is_engraved_on_the_clean_side() -> None:
+    # Лицевую занимает авторская надпись, поэтому гравируем обратную сторону.
+    source = MODEL_PATH.read_text(encoding="utf-8")
+    assert "module back_engraving()" in source
+    assert "mirror([1, 0, 0])" in source, "на обороте надписи надо зеркалить"
+    for name in ("cassette_title_at", "cassette_role_at", "cassette_giant_at"):
+        x, _ = model_point(name)
+        assert 20 < x < 80, f"{name}: гравировка уходит в сужение детали, X={x}"
+
+
 def test_engraving_keeps_clear_of_the_working_edges() -> None:
     # У измерителя щупы на торцах: до X = 5 и после X = 140 трогать нельзя.
     for name in ("chain_text_at", "chain_logo_at", "chain_giant_at"):
