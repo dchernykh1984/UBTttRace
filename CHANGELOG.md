@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.16.2](https://github.com/dchernykh1984/UBTttRace/compare/v0.16.1...v0.16.2) (2026-09-13)
+
+
+### Исправления
+
+* put the scraper label on the solid half of the medal ([0f86037](https://github.com/dchernykh1984/UBTttRace/commit/0f860373e016f5603e125b9f4bc07e71e7d0a862))
+
+
+### Рефакторинг
+
+* name the branded tools like the other medals ([bb506d4](https://github.com/dchernykh1984/UBTttRace/commit/bb506d45e0f7cd0c2c0b9a690b31b7fa24f8925c))
+
 ## [0.16.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.16.0...v0.16.1) (2026-09-13)
 
 
