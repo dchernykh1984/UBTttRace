@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.15.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.15.0...v0.15.1) (2026-09-13)
+
+
+### Исправления
+
+* match the key tooth profile to the factory tool ([16cbfe0](https://github.com/dchernykh1984/UBTttRace/commit/16cbfe089652f6be5072082058be98b45a6cf584))
+* rework the medal face and both bike tools ([392441b](https://github.com/dchernykh1984/UBTttRace/commit/392441b4235b9fe6596f2d3c6aad16c52f8aaf6a))
+
 ## [0.15.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.14.0...v0.15.0) (2026-09-13)
 
 
