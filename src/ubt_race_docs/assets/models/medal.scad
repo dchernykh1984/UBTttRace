@@ -28,10 +28,10 @@ giant_file = "giant-logo.svg";
 logo_source_height = 116.1;
 giant_source_width = 99.81;
 
-text_size = 1.9;
-title_y = 18;
-role_y = -4.5;
-logo_y = 8;
+text_size = 2.4;
+logo_y = 14;
+title_y = 4;
+role_y = -3.5;
 giant_y = -13;
 engrave_depth = 0.6;
 logo_height = 12;
@@ -127,20 +127,24 @@ module giant_logo(width) {
             import(giant_file, center = true);
 }
 
-// Медальная раскладка сверху вниз: гонка, эмблема команды, кого награждаем,
-// партнёр. Инструмент весь на обратной стороне, поэтому лицо свободно.
+// Медальная раскладка сверху вниз: эмблема команды, гонка, кого награждаем,
+// партнёр. С эмблемы начинать правильнее, а строки уходят ближе к середине,
+// где хорда длиннее — там они не упираются в кромку и набраны крупнее.
 module face_engraving() {
     face_plate() {
-        engraved_text(title_line, text_size, title_y);
         translate([0, logo_y, 0]) ubt_logo(logo_height);
-        engraved_text(role_line, text_size + 0.3, role_y);
+        engraved_text(title_line, text_size, title_y);
+        engraved_text(role_line, text_size, role_y);
         translate([0, giant_y, 0]) giant_logo(giant_width);
     }
 }
 
+// Отверстие уводим к плечу медали: по горизонтали оно упиралось бы в строки,
+// а сверху — в эмблему.
 module lanyard() {
     offset = medal_diameter / 2 - lanyard_margin;
-    translate([offset, 0, -1]) cylinder(d = lanyard_hole, h = medal_thickness + 2);
+    translate([offset * cos(45), offset * sin(45), -1])
+        cylinder(d = lanyard_hole, h = medal_thickness + 2);
 }
 
 // Язычок проставки торчит из кромки медали и входит в щель для ротора.
