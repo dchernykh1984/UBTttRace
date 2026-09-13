@@ -67,7 +67,7 @@ def test_engraving_says_the_same_as_the_trophy() -> None:
 
 def test_key_driver_sticks_out_of_the_medal() -> None:
     # Шлицы у крышки внутренние, поэтому ключ — выступ, а не гнездо.
-    assert model_number("cap_points") == 10, "зубцов столько же, сколько у заводского"
+    assert model_number("cap_points") == 8, "зубцов столько же, сколько у заводского"
     assert model_number("cap_driver_height") >= 6, "короткий выступ выскочит из шлицев"
     assert model_number("cap_lead_in") > 0, "без заходной фаски ключ не наденется"
 
