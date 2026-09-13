@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.15.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.14.0...v0.15.0) (2026-09-13)
+
+
+### Новое
+
+* add a plain whistle medal next to the dog one ([58e1af3](https://github.com/dchernykh1984/UBTttRace/commit/58e1af3992929ba638328d609d7e09037345b825))
+
+
+### Исправления
+
+* make the medal tools actually usable ([71bf366](https://github.com/dchernykh1984/UBTttRace/commit/71bf366f29b7781faeb2b4f5634b72b22dd69d42))
+
+
+### Документация
+
+* explain how each medal tool is used ([a3a14d0](https://github.com/dchernykh1984/UBTttRace/commit/a3a14d0386e3f9cd246136b0aa49fa36db16c9b4))
+
 ## [0.14.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.13.0...v0.14.0) (2026-09-13)
 
 
