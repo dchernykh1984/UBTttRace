@@ -28,12 +28,14 @@ giant_file = "giant-logo.svg";
 logo_source_height = 116.1;
 giant_source_width = 99.81;
 
-text_size = 2.1;
-title_y = 16;
-role_y = 12.6;
+text_size = 1.9;
+title_y = 18;
+role_y = -4.5;
+logo_y = 8;
+giant_y = -13;
 engrave_depth = 0.6;
-logo_height = 10;
-giant_width = 16;
+logo_height = 12;
+giant_width = 18;
 
 /* [Медаль] */
 medal_diameter = 50;
@@ -50,9 +52,10 @@ sram_thickness = 2.8;
 // Проставка заходит в узкую щель для ротора, поэтому это торчащий из медали
 // язычок, а не сточенная кромка: кромкой в суппорт не залезть. Язычок
 // ступенчатый по длине — тонким концом в Shimano, целиком в SRAM.
-spacer_tongue_length = 17;
+spacer_tongue_length = 16;
 spacer_tongue_width = 13;
-spacer_thin_length = 9;
+spacer_barb = 0.45;
+spacer_barb_at = 7;
 spacer_label_size = 2.2;
 spacer_label_depth = 0.35;
 
@@ -81,8 +84,8 @@ whistle_window = 4.2;
 whistle_channel_height = 1.2;
 whistle_channel_width = 4.2;
 whistle_wall = 1.4;
-whistle_line = "WHISTLE";
-dog_line = "ANTI-DOG WHISTLE";
+whistle_line = ["WHISTLE"];
+dog_line = ["ANTI-DOG", "WHISTLE"];
 
 $fn = 64;
 
@@ -125,14 +128,14 @@ module giant_logo(width) {
             import(giant_file, center = true);
 }
 
-// Центр медали занят инструментом — у ключа там и вовсе сквозное гнездо, —
-// поэтому надписи уходят вверх, логотипы вниз, а середина остаётся пустой.
+// Медальная раскладка сверху вниз: гонка, эмблема команды, кого награждаем,
+// партнёр. Инструмент весь на обратной стороне, поэтому лицо свободно.
 module face_engraving() {
     face_plate() {
         engraved_text(title_line, text_size, title_y);
-        engraved_text(role_line, text_size, role_y);
-        translate([-10, -15, 0]) ubt_logo(logo_height);
-        translate([10, -15.5, 0]) giant_logo(giant_width);
+        translate([0, logo_y, 0]) ubt_logo(logo_height);
+        engraved_text(role_line, text_size + 0.3, role_y);
+        translate([0, giant_y, 0]) giant_logo(giant_width);
     }
 }
 
@@ -141,70 +144,74 @@ module lanyard() {
     translate([offset, 0, -1]) cylinder(d = lanyard_hole, h = medal_thickness + 2);
 }
 
-// Язычок проставки: торчит из кромки медали и входит в щель для ротора.
-// Ступенька по длине даёт обе ходовые толщины одной деталью — тонкий конец
-// для Shimano, весь язычок целиком для SRAM.
-module spacer_tongue() {
+// Язычок проставки торчит из кромки медали и входит в щель для ротора.
+// Язычков два, в противоположные стороны: тонкий под Shimano, толстый под
+// SRAM. Боковые заусенцы держат проставку в суппорте, чтобы она не выпала
+// в багажнике: заходят легко, обратно упираются.
+module spacer_tongue(thickness, direction) {
     radius = medal_diameter / 2;
     base = radius - 3;
-    thick_length = spacer_tongue_length - spacer_thin_length;
-    // толстая часть у самой медали
-    translate([-spacer_tongue_width / 2, base, 0])
-        cube([spacer_tongue_width, thick_length + 3, sram_thickness]);
-    // тонкий конец со скруглением: так он находит щель наощупь
-    hull() {
-        translate([-spacer_tongue_width / 2, base + thick_length, 0])
-            cube([spacer_tongue_width, 0.1, shimano_thickness]);
-        translate([0, base + thick_length + spacer_thin_length - spacer_tongue_width / 2, 0])
-            cylinder(d = spacer_tongue_width, h = shimano_thickness);
+    tip = base + spacer_tongue_length;
+    rotate([0, 0, direction]) {
+        hull() {
+            translate([-spacer_tongue_width / 2, base, 0])
+                cube([spacer_tongue_width, 0.1, thickness]);
+            translate([0, tip - spacer_tongue_width / 2, 0])
+                cylinder(d = spacer_tongue_width, h = thickness, $fn = 48);
+        }
+        for (side = [-1, 1])
+            translate([side * spacer_tongue_width / 2, base + spacer_barb_at, 0])
+                rotate([0, 0, side * 30])
+                    cube([spacer_barb, spacer_barb * 3, thickness]);
     }
 }
 
-module spacer_marks() {
+module spacer_label(line, thickness, direction) {
     radius = medal_diameter / 2;
-    base = radius - 3;
-    thick_length = spacer_tongue_length - spacer_thin_length;
-    translate([0, base + thick_length / 2, sram_thickness - spacer_label_depth])
-        linear_extrude(height = spacer_label_depth * 2)
-            text("2.8", font = font_name, size = spacer_label_size,
-                 halign = "center", valign = "center");
-    translate([0, base + thick_length + 3, shimano_thickness - spacer_label_depth])
-        linear_extrude(height = spacer_label_depth * 2)
-            text("1.8", font = font_name, size = spacer_label_size,
-                 halign = "center", valign = "center");
-    translate([0, 8, medal_thickness - engrave_depth])
-        linear_extrude(height = engrave_depth * 2)
-            text("SRAM 2.8 · SHIMANO 1.8", font = font_name, size = spacer_label_size,
-                 halign = "center", valign = "center");
+    rotate([0, 0, direction])
+        translate([0, radius - 9, medal_thickness - engrave_depth])
+            rotate([0, 0, direction == 0 ? 0 : 180])
+                linear_extrude(height = engrave_depth * 2)
+                    text(line, font = font_name, size = spacer_label_size,
+                         halign = "center", valign = "center");
 }
 
 module spacer_medal() {
     difference() {
         union() {
             medal_blank();
-            spacer_tongue();
+            spacer_tongue(shimano_thickness, 0);
+            spacer_tongue(sram_thickness, 180);
         }
         face_engraving();
         lanyard();
-        spacer_marks();
+        spacer_label("SHIMANO 1.8", shimano_thickness, 0);
+        spacer_label("SRAM 2.8", sram_thickness, 180);
     }
 }
 
-// Ключ: шлицевой выступ под внутренние зубцы крышки натяга. Печатается
-// стоймя вместе с медалью, поэтому обходится без поддержек.
+// Ключ: шлицевой выступ под внутренние зубцы крышки натяга. Зубцы круглые,
+// как у заводского инструмента: угловатые не входят в литые скруглённые пазы
+// и срезаются первыми. Печатается стоймя, поэтому обходится без поддержек.
 module cap_driver() {
     root = cap_root_diameter;
-    translate([0, 0, medal_thickness]) {
-        cylinder(d = root, h = cap_driver_height);
-        for (index = [0 : cap_points - 1])
-            rotate([0, 0, index * 360 / cap_points])
-                hull() {
-                    translate([-cap_tooth_width / 2, root / 2 - 0.6, 0])
-                        cube([cap_tooth_width, cap_tooth_height + 0.6, 0.1]);
-                    translate([-cap_tooth_width / 2, root / 2 - 0.6, cap_driver_height - cap_lead_in])
-                        cube([cap_tooth_width, cap_tooth_height + 0.6, cap_lead_in]);
-                }
-    }
+    tooth = cap_tooth_width / 2;
+    translate([0, 0, medal_thickness])
+        intersection() {
+            union() {
+                cylinder(d = root, h = cap_driver_height);
+                for (index = [0 : cap_points - 1])
+                    rotate([0, 0, index * 360 / cap_points])
+                        translate([0, root / 2, 0])
+                            cylinder(r = tooth, h = cap_driver_height, $fn = 32);
+            }
+            // заходный конус: без него ключ приходится ловить вслепую
+            cylinder(
+                d1 = root + 4 * tooth,
+                d2 = root + 2 * tooth - 2 * cap_lead_in,
+                h = cap_driver_height
+            );
+        }
 }
 
 module key_medal() {
@@ -236,10 +243,11 @@ module whistle_medal(chamber_diameter, chamber_height, line) {
         face_engraving();
         lanyard();
         whistle_void(chamber_diameter, chamber_height);
-        translate([0, medal_diameter / 2 - 6, medal_thickness - engrave_depth])
-            linear_extrude(height = engrave_depth * 2)
-                text(line, font = font_name, size = spacer_label_size,
-                     halign = "center", valign = "center");
+        for (index = [0 : len(line) - 1])
+            translate([0, 17 - index * 3.4, medal_thickness - engrave_depth])
+                linear_extrude(height = engrave_depth * 2)
+                    text(line[index], font = font_name, size = spacer_label_size,
+                         halign = "center", valign = "center");
     }
 }
 
