@@ -48,20 +48,19 @@ def test_spacers_match_the_stock_ones() -> None:
     assert model_number("sram_thickness") == 2.8
 
 
-def test_spacer_sectors_leave_material_under_them() -> None:
-    # Сектор стачивается сверху, и под подписью должно что-то остаться.
+def test_spacer_tongue_is_stepped_thin_end_first() -> None:
+    # Тонкий конец идёт первым: им проставка находит щель Shimano, а целиком
+    # язычок садится в более широкий зазор SRAM.
+    assert model_number("shimano_thickness") < model_number("sram_thickness")
+    assert model_number("spacer_thin_length") < model_number("spacer_tongue_length")
     assert model_number("spacer_label_depth") < model_number("shimano_thickness")
-    assert model_number("sram_thickness") < model_number("medal_thickness")
 
 
-def test_spacer_sector_is_a_wedge_wide_enough_to_enter_a_caliper() -> None:
-    # Клин расширяется к кромке, поэтому меряем ширину по дуге медали.
-    import math
-
-    angle = model_number("spacer_angle")
-    width = model_number("medal_diameter") * math.sin(math.radians(angle / 2))
-    assert width > 15, f"рабочая кромка всего {width:.1f} мм"
-    assert angle < 90, "два таких сектора не должны съесть медаль"
+def test_spacer_tongue_reaches_the_pads() -> None:
+    # Язычок должен выйти за кромку медали настолько, чтобы перекрыть колодку.
+    stick_out = model_number("spacer_tongue_length") - 3
+    assert stick_out > 12, f"язычок торчит всего на {stick_out:.1f} мм"
+    assert model_number("spacer_tongue_width") < 16, "шире щели для ротора не пролезет"
 
 
 def model_string(name: str) -> str:
@@ -88,18 +87,23 @@ def test_engraving_says_the_same_as_the_trophy() -> None:
     assert "Участник" in model_string("role_line")
 
 
-def test_lines_clear_the_key_socket() -> None:
-    # У ключа в центре сквозное гнездо — надписи не должны в него попадать.
-    lowest = model_number("role_y") - model_number("text_size") / 2
-    socket = (model_number("cap_diameter") + model_number("cap_clearance")) / 2
-    assert lowest > socket, "нижняя строка налезает на гнездо ключа"
-
-
-def test_cap_socket_is_an_eight_point_star() -> None:
-    # Крышка предварительного натяга Hollowtech II — восьмилучевая звезда.
+def test_key_driver_sticks_out_of_the_medal() -> None:
+    # Шлицы у крышки внутренние, поэтому ключ — выступ, а не гнездо.
     assert model_number("cap_points") == 8
-    assert model_number("cap_diameter") < model_number("medal_diameter") / 2 + 5
-    assert model_number("cap_clearance") > 0, "без зазора ключ не наденется"
+    assert model_number("cap_driver_height") >= 6, "короткий выступ выскочит из шлицев"
+    assert model_number("cap_lead_in") > 0, "без заходной фаски ключ не наденется"
+
+
+def test_key_driver_leaves_the_engraving_alone() -> None:
+    # Выступ стоит в центре, надписи идут выше и ниже него.
+    outer = model_number("cap_root_diameter") / 2 + model_number("cap_tooth_height")
+    lowest_line = model_number("role_y") - model_number("text_size") / 2
+    assert lowest_line > outer, "нижняя строка упирается в шлицы"
+
+
+def test_two_whistles_differ_in_pitch() -> None:
+    # Камера меньше — тон выше: собачий свисток пронзительнее обычного.
+    assert model_number("dog_chamber_diameter") < model_number("whistle_chamber_diameter")
 
 
 def test_whistle_cavity_stays_inside_the_medal() -> None:

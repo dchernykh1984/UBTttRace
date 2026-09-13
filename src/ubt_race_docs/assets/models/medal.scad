@@ -1,11 +1,12 @@
 // Медаль участника UBT TT — сувенир, который остаётся инструментом.
 //
 // Три исполнения, одинаковые снаружи:
-//   spacer  — транспортные проставки под колодки: одна кромка под Shimano,
-//             противоположная под SRAM;
-//   key     — ключ для пластиковой крышки предварительного натяга Shimano
-//             Hollowtech II (та самая, что TL-FC16);
-//   whistle — свисток, чтобы отгонять собак.
+//   spacer      — транспортная проставка под колодки: ступенчатый язычок,
+//                 дальняя часть 1.8 мм (Shimano), ближняя 2.8 мм (SRAM);
+//   key         — ключ крышки натяга Shimano Hollowtech II: шлицевой выступ,
+//                 медаль работает рукояткой;
+//   whistle     — свисток;
+//   dog-whistle — свисток повыше тоном, чтобы отгонять собак.
 //
 // Лицевая сторона у всех одна и та же и лежит ВНИЗУ: медаль печатается
 // гравировкой на стол. Так надписи выходят чёткими (первый слой прижат
@@ -15,7 +16,7 @@
 //   openscad -o medal-spacer.stl -D 'part="spacer"' medal.scad
 
 /* [Что печатать] */
-part = "spacer"; // [spacer, key, whistle]
+part = "spacer"; // [spacer, key, whistle, dog-whistle]
 
 /* [Надписи] */
 title_line = "UBT TT · 04.10.2026";
@@ -41,38 +42,47 @@ edge_chamfer = 0.7;
 lanyard_hole = 4;
 lanyard_margin = 4.5;
 
-/* [Проставки под колодки] */
+/* [Проставка под колодки] */
 // Толщины взяты у штатных проставок: Shimano кладёт 1.8 мм, SRAM для
 // шоссейных Red/Force/Rival AXS — 2.8 мм. Проверять на своих тормозах.
 shimano_thickness = 1.8;
 sram_thickness = 2.8;
-// Рабочая зона — клиновидный сектор: он расширяется к кромке, поэтому
-// заходит между колодок на всю глубину, а не упирается плечами.
-spacer_angle = 54;
-spacer_label_size = 2.4;
-spacer_label_radius = 19;
+// Проставка заходит в узкую щель для ротора, поэтому это торчащий из медали
+// язычок, а не сточенная кромка: кромкой в суппорт не залезть. Язычок
+// ступенчатый по длине — тонким концом в Shimano, целиком в SRAM.
+spacer_tongue_length = 17;
+spacer_tongue_width = 13;
+spacer_thin_length = 9;
+spacer_label_size = 2.2;
 spacer_label_depth = 0.35;
 
 /* [Ключ крышки шатуна] */
-// Крышка предварительного натяга Hollowtech II — восьмилучевая звезда.
-// Размеры под проверку штангенциркулем: правится здесь одной строкой.
+// Крышка натяга Hollowtech II имеет ВНУТРЕННИЕ шлицы, поэтому ключ — это
+// торчащий из медали восьмизубый выступ, а медаль служит рукояткой.
+// Диаметр снят с чужого инструмента приблизительно: измерьте свой
+// штангенциркулем и поправьте здесь.
 cap_points = 8;
-cap_diameter = 21.6;
-cap_tooth_depth = 1.5;
-cap_tooth_width = 3.4;
-cap_clearance = 0.25;
+cap_root_diameter = 14.2;
+cap_tooth_height = 1.3;
+cap_tooth_width = 3.0;
+cap_driver_height = 8;
+cap_lead_in = 0.8;
 
 /* [Свисток] */
 // Резонатор Гельмгольца: объём камеры и сечение окна задают тон. При этих
 // числах выходит около 7–8 кГц — человеку пронзительно, собаке отлично
 // слышно. Настоящий ультразвук на FDM не выдуть: каналы нужны глаже.
-whistle_chamber_diameter = 11;
-whistle_chamber_height = 2.6;
+// Камера побольше звучит ниже и громче, поменьше — пронзительнее.
+whistle_chamber_diameter = 24;
+whistle_chamber_height = 3;
+dog_chamber_diameter = 11;
+dog_chamber_height = 2.6;
 whistle_window = 4.2;
 whistle_channel_height = 1.2;
 whistle_channel_width = 4.2;
 whistle_wall = 1.4;
-whistle_line = "ANTI-DOG WHISTLE";
+whistle_line = "WHISTLE";
+dog_line = "ANTI-DOG WHISTLE";
 
 $fn = 64;
 
@@ -131,92 +141,112 @@ module lanyard() {
     translate([offset, 0, -1]) cylinder(d = lanyard_hole, h = medal_thickness + 2);
 }
 
-// Кромка, сточенная до толщины проставки. Сектор вырезается с верхней
-// стороны — при печати это ступенька, а не нависание.
-module spacer_cut(thickness, direction) {
-    reach = medal_diameter;
-    rotate([0, 0, direction])
-        translate([0, 0, thickness])
-            linear_extrude(height = medal_thickness)
-                polygon([
-                    [0, 0],
-                    [reach * sin(-spacer_angle / 2), reach * cos(spacer_angle / 2)],
-                    [reach * sin(spacer_angle / 2), reach * cos(spacer_angle / 2)],
-                ]);
+// Язычок проставки: торчит из кромки медали и входит в щель для ротора.
+// Ступенька по длине даёт обе ходовые толщины одной деталью — тонкий конец
+// для Shimano, весь язычок целиком для SRAM.
+module spacer_tongue() {
+    radius = medal_diameter / 2;
+    base = radius - 3;
+    thick_length = spacer_tongue_length - spacer_thin_length;
+    // толстая часть у самой медали
+    translate([-spacer_tongue_width / 2, base, 0])
+        cube([spacer_tongue_width, thick_length + 3, sram_thickness]);
+    // тонкий конец со скруглением: так он находит щель наощупь
+    hull() {
+        translate([-spacer_tongue_width / 2, base + thick_length, 0])
+            cube([spacer_tongue_width, 0.1, shimano_thickness]);
+        translate([0, base + thick_length + spacer_thin_length - spacer_tongue_width / 2, 0])
+            cylinder(d = spacer_tongue_width, h = shimano_thickness);
+    }
 }
 
-// Подпись лежит на самом сточенном секторе, поэтому гравируем мельче:
-// под ней остаётся только толщина проставки.
-module spacer_label(line, thickness, direction) {
-    rotate([0, 0, direction])
-        translate([0, spacer_label_radius, thickness - spacer_label_depth])
-            rotate([0, 0, direction == 0 ? 0 : 180])
-                linear_extrude(height = spacer_label_depth * 2)
-                    text(line, font = font_name, size = spacer_label_size,
-                         halign = "center", valign = "center");
+module spacer_marks() {
+    radius = medal_diameter / 2;
+    base = radius - 3;
+    thick_length = spacer_tongue_length - spacer_thin_length;
+    translate([0, base + thick_length / 2, sram_thickness - spacer_label_depth])
+        linear_extrude(height = spacer_label_depth * 2)
+            text("2.8", font = font_name, size = spacer_label_size,
+                 halign = "center", valign = "center");
+    translate([0, base + thick_length + 3, shimano_thickness - spacer_label_depth])
+        linear_extrude(height = spacer_label_depth * 2)
+            text("1.8", font = font_name, size = spacer_label_size,
+                 halign = "center", valign = "center");
+    translate([0, 8, medal_thickness - engrave_depth])
+        linear_extrude(height = engrave_depth * 2)
+            text("SRAM 2.8 · SHIMANO 1.8", font = font_name, size = spacer_label_size,
+                 halign = "center", valign = "center");
 }
 
 module spacer_medal() {
     difference() {
-        medal_blank();
+        union() {
+            medal_blank();
+            spacer_tongue();
+        }
         face_engraving();
         lanyard();
-        spacer_cut(shimano_thickness, 0);
-        spacer_cut(sram_thickness, 180);
-        spacer_label("SHIMANO 1.8", shimano_thickness, 0);
-        spacer_label("SRAM 2.8", sram_thickness, 180);
+        spacer_marks();
     }
 }
 
-// Гнездо под крышку: цилиндр по её диаметру плюс пазы под лучи звезды.
-module cap_socket() {
-    radius = (cap_diameter + cap_clearance) / 2;
-    translate([0, 0, -1]) cylinder(r = radius, h = medal_thickness + 2);
-    for (index = [0 : cap_points - 1])
-        rotate([0, 0, index * 360 / cap_points])
-            translate([-cap_tooth_width / 2, radius - 0.1, -1])
-                cube([cap_tooth_width, cap_tooth_depth + 0.1, medal_thickness + 2]);
+// Ключ: шлицевой выступ под внутренние зубцы крышки натяга. Печатается
+// стоймя вместе с медалью, поэтому обходится без поддержек.
+module cap_driver() {
+    root = cap_root_diameter;
+    translate([0, 0, medal_thickness]) {
+        cylinder(d = root, h = cap_driver_height);
+        for (index = [0 : cap_points - 1])
+            rotate([0, 0, index * 360 / cap_points])
+                hull() {
+                    translate([-cap_tooth_width / 2, root / 2 - 0.6, 0])
+                        cube([cap_tooth_width, cap_tooth_height + 0.6, 0.1]);
+                    translate([-cap_tooth_width / 2, root / 2 - 0.6, cap_driver_height - cap_lead_in])
+                        cube([cap_tooth_width, cap_tooth_height + 0.6, cap_lead_in]);
+                }
+    }
 }
 
 module key_medal() {
     difference() {
-        medal_blank();
+        union() {
+            medal_blank();
+            cap_driver();
+        }
         face_engraving();
         lanyard();
-        cap_socket();
     }
 }
 
 // Свисток: воздух заходит с кромки узким каналом, разбивается об острую
 // кромку окна и раскачивает закрытую камеру за ним.
-module whistle_void() {
+module whistle_void(chamber_diameter, chamber_height) {
     radius = medal_diameter / 2;
     z = whistle_wall;
-    // канал вдува от кромки внутрь
     translate([-whistle_channel_width / 2, -radius - 1, z])
-        cube([whistle_channel_width, radius - whistle_chamber_diameter / 2 + 1,
-              whistle_channel_height]);
-    // окно наружу: через него уходит струя и звучит свисток
-    translate([-whistle_window / 2, -whistle_chamber_diameter / 2 - whistle_window, z])
+        cube([whistle_channel_width, radius - chamber_diameter / 2 + 1, whistle_channel_height]);
+    translate([-whistle_window / 2, -chamber_diameter / 2 - whistle_window, z])
         cube([whistle_window, whistle_window, medal_thickness]);
-    // резонансная камера
-    translate([0, 0, z]) cylinder(d = whistle_chamber_diameter, h = whistle_chamber_height);
+    translate([0, 0, z]) cylinder(d = chamber_diameter, h = chamber_height);
 }
 
-module whistle_medal() {
+module whistle_medal(chamber_diameter, chamber_height, line) {
     difference() {
         medal_blank();
         face_engraving();
         lanyard();
-        whistle_void();
-        translate([0, 15, medal_thickness - engrave_depth])
+        whistle_void(chamber_diameter, chamber_height);
+        translate([0, medal_diameter / 2 - 6, medal_thickness - engrave_depth])
             linear_extrude(height = engrave_depth * 2)
-                text(whistle_line, font = font_name, size = spacer_label_size,
+                text(line, font = font_name, size = spacer_label_size,
                      halign = "center", valign = "center");
     }
 }
 
 if (part == "spacer") spacer_medal();
 else if (part == "key") key_medal();
-else if (part == "whistle") whistle_medal();
-else assert(false, "part должен быть spacer, key или whistle");
+else if (part == "whistle")
+    whistle_medal(whistle_chamber_diameter, whistle_chamber_height, whistle_line);
+else if (part == "dog-whistle")
+    whistle_medal(dog_chamber_diameter, dog_chamber_height, dog_line);
+else assert(false, "part должен быть spacer, key, whistle или dog-whistle");
