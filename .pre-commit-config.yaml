@@ -12,7 +12,9 @@ repos:
     hooks:
       - id: check-added-large-files
         # Вшитые шрифты DejaVu весят до 800 КБ — это норма.
-        args: [--maxkb=1024]
+        # Чужая модель скребка кассеты весит 1.8 МБ: тридцать семь тысяч
+        # треугольников, и упрощать её мы не станем — это чужая форма.
+        args: [--maxkb=2048]
       - id: check-merge-conflict
       - id: check-json
       - id: check-toml
