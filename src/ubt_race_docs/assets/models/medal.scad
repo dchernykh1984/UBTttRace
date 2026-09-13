@@ -75,6 +75,9 @@ jockey_edge_reach = 13;
 // а по горизонтали перерезала бы строки.
 jockey_direction = 135;
 jockey_line = ["JOCKEY", "SCRAPER"];
+// Подпись уходит на целую половину медали: на сточенной кромке под ней
+// остаётся полтора миллиметра, и буквы проваливаются в прорезь.
+jockey_label_radius = 13;
 
 /* [Свисток] */
 // Резонатор Гельмгольца: объём камеры и сечение окна задают тон. При этих
@@ -232,10 +235,14 @@ module jockey_medal() {
         lanyard();
         jockey_thin_edge();
         jockey_slots();
-        rotate([0, 0, jockey_direction])
+        rotate([0, 0, jockey_direction + 180])
         for (index = [0 : len(jockey_line) - 1])
-            translate([0, 15 - index * 3.4, jockey_edge_thickness - engrave_depth / 2])
-                linear_extrude(height = engrave_depth)
+            translate([
+                0,
+                jockey_label_radius - index * 3.4,
+                medal_thickness - engrave_depth,
+            ])
+                linear_extrude(height = engrave_depth * 2)
                     text(jockey_line[index], font = font_name, size = mark_size,
                          halign = "center", valign = "center");
     }
