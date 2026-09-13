@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.16.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.16.0...v0.16.1) (2026-09-13)
+
+
+### Исправления
+
+* engrave the cassette tool on its clean back side ([c34bd49](https://github.com/dchernykh1984/UBTttRace/commit/c34bd49209df67f49bd72201d2bd5d4613d44474))
+
 ## [0.16.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.15.2...v0.16.0) (2026-09-13)
 
 
