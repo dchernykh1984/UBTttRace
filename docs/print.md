@@ -238,15 +238,15 @@ Bicycle Team целиком, вместе с названием команды. 
 
 На стол 220×220 помещается 4×4 = 16 медалей.
 
-## Брендированные инструменты — `tool-*.stl`
+## Медали-инструменты — `medal-chain-wear.stl`, `medal-cassette.stl`
 
 Два инструмента мы не рисовали, а взяли готовыми и нанесли на них гравировку
 гонки — эмблему команды, дату и логотип партнёра.
 
 | Файл | Что это | Источник модели |
 |---|---|---|
-| `tool-chain-wear.stl` | измеритель растяжения цепи, планка 159 мм | [Printables 330680](https://printables.com/model/330680-bicycle-chain-wear-indicator), CC0 |
-| `tool-cassette.stl` | скребок для чистки между звёздами кассеты, 221 мм | [Printables 220396](https://www.printables.com/model/220396-bike-cassette-cleaning-tool), CC BY 4.0 |
+| `medal-chain-wear.stl` | измеритель растяжения цепи, планка 159 мм | [Printables 330680](https://printables.com/model/330680-bicycle-chain-wear-indicator), CC0 |
+| `medal-cassette.stl` | скребок для чистки между звёздами кассеты, 221 мм | [Printables 220396](https://www.printables.com/model/220396-bike-cassette-cleaning-tool), CC BY 4.0 |
 
 CC BY требует указывать источник — он назван здесь и в
 `assets/models/vendor/README.md`.

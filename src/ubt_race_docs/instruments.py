@@ -1,5 +1,8 @@
 """Брендированные инструменты гонки — обёртка над `instruments.scad`.
 
+Файлы называются `medal-*`, как и медали: для участника это одна и та же
+награда, просто разной формы.
+
 Форму этих инструментов рисовали не мы: модели взяты готовыми и лежат
 в `assets/models/vendor/` вместе с источниками и лицензиями. Наше здесь
 только гравировка — гонка, эмблема команды и логотип партнёра.
@@ -23,7 +26,7 @@ KINDS: tuple[tuple[str, str], ...] = (
 def render_plan() -> tuple[RenderTask, ...]:
     """Что резать в STL: по файлу на инструмент."""
     return tuple(
-        RenderTask(filename=f"tool-{kind}.stl", part=kind, definitions={}, comment=comment)
+        RenderTask(filename=f"medal-{kind}.stl", part=kind, definitions={}, comment=comment)
         for kind, comment in KINDS
     )
 
