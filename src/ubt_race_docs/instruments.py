@@ -1,0 +1,36 @@
+"""Брендированные инструменты гонки — обёртка над `instruments.scad`.
+
+Форму этих инструментов рисовали не мы: модели взяты готовыми и лежат
+в `assets/models/vendor/` вместе с источниками и лицензиями. Наше здесь
+только гравировка — гонка, эмблема команды и логотип партнёра.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+from .trophies import RenderTask, render
+
+MODEL_PATH = Path(__file__).parent / "assets" / "models" / "instruments.scad"
+VENDOR_DIR = MODEL_PATH.parent / "vendor"
+
+KINDS: tuple[tuple[str, str], ...] = (
+    ("chain-wear", "Измеритель растяжения цепи (модель под CC0)"),
+    ("cassette", "Скребок для чистки кассеты (модель под CC BY 4.0)"),
+)
+
+
+def render_plan() -> tuple[RenderTask, ...]:
+    """Что резать в STL: по файлу на инструмент."""
+    return tuple(
+        RenderTask(filename=f"tool-{kind}.stl", part=kind, definitions={}, comment=comment)
+        for kind, comment in KINDS
+    )
+
+
+def render_all(directory: Path, executable: str | None = None) -> list[Path]:
+    """Нанести гравировку на все инструменты."""
+    return [
+        render(directory / task.filename, task, model=MODEL_PATH, executable=executable)
+        for task in render_plan()
+    ]

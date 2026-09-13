@@ -1,0 +1,100 @@
+// Брендирование готовых инструментов гонки.
+//
+// Форму этих инструментов рисовали не мы — мы только гравируем на них гонку,
+// эмблему команды и логотип партнёра. Сами модели лежат в `vendor/`, их
+// источники и лицензии перечислены в `vendor/README.md`.
+//
+//   chain-wear — измеритель растяжения цепи (планка 159 × 33 × 2 мм);
+//   cassette   — скребок для чистки между звёздами кассеты (221 × 48 × 4 мм).
+//
+// Гравировка мелкая и лежит на плоских участках вдали от рабочих кромок:
+// у измерителя это щупы на торцах, у скребка — зубья по краям.
+//
+//   openscad -o chain-wear.stl -D 'part="chain-wear"' instruments.scad
+
+/* [Что печатать] */
+part = "chain-wear"; // [chain-wear, cassette]
+
+/* [Надписи] */
+title_line = "UBT TT · 04.10.2026";
+font_name = "DejaVu Sans:style=Bold";
+logo_file = "ubt-logo.svg";
+giant_file = "giant-logo.svg";
+logo_source_height = 116.1;
+giant_source_width = 99.81;
+
+/* [Измеритель растяжения цепи] */
+// Планка 2 мм толщиной: гравируем на 0.4, под надписью остаётся 1.6 мм.
+chain_file = "vendor/chain-wear-indicator.stl";
+chain_thickness = 2;
+chain_engrave = 0.4;
+chain_text_size = 4.4;
+chain_text_at = [70, 21];
+chain_logo_at = [22, 17];
+chain_logo_height = 13;
+chain_giant_at = [116, 17];
+chain_giant_width = 26;
+
+/* [Скребок кассеты] */
+// Пластина 4 мм: гравируем на 0.5. Строка идёт ниже авторской «Tooth Tool
+// v2» — поверх неё буквы просто не отпечатались бы, там уже нет материала,
+// — и не задевает зубья по краям.
+cassette_file = "vendor/cassette-cleaner.stl";
+cassette_thickness = 4;
+cassette_engrave = 0.5;
+cassette_angle = 0;
+cassette_text_size = 2.8;
+cassette_text_at = [38, -12.5];
+cassette_logo_at = [19, -5];
+cassette_logo_height = 8;
+cassette_giant_at = [70, -12.5];
+cassette_giant_width = 15;
+
+$fn = 48;
+
+
+module engraved_text(line, size) {
+    linear_extrude(height = 10)
+        text(line, font = font_name, size = size, halign = "center", valign = "center");
+}
+
+module ubt_logo(height) {
+    $fn = 12;
+    linear_extrude(height = 10)
+        scale(height / logo_source_height)
+            import(logo_file, center = true);
+}
+
+module giant_logo(width) {
+    $fn = 12;
+    linear_extrude(height = 10)
+        scale(width / giant_source_width)
+            import(giant_file, center = true);
+}
+
+module chain_wear_indicator() {
+    difference() {
+        import(chain_file);
+        translate([0, 0, chain_thickness - chain_engrave]) {
+            translate(chain_text_at) engraved_text(title_line, chain_text_size);
+            translate(chain_logo_at) ubt_logo(chain_logo_height);
+            translate(chain_giant_at) giant_logo(chain_giant_width);
+        }
+    }
+}
+
+module cassette_cleaner() {
+    difference() {
+        import(cassette_file);
+        translate([0, 0, cassette_thickness - cassette_engrave])
+            rotate([0, 0, cassette_angle]) {
+                translate(cassette_text_at) engraved_text(title_line, cassette_text_size);
+                translate(cassette_logo_at) ubt_logo(cassette_logo_height);
+                translate(cassette_giant_at) giant_logo(cassette_giant_width);
+            }
+    }
+}
+
+if (part == "chain-wear") chain_wear_indicator();
+else if (part == "cassette") cassette_cleaner();
+else assert(false, "part должен быть chain-wear или cassette");
