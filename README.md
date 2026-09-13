@@ -58,6 +58,7 @@ make kit       # то же самое плюс STL кубков (нужен open
 | `make models` | `trophy-*.stl` (нужен openscad) |
 | `make map` | `map.png` — карта трассы в цветах партнёра |
 | `make medals` | `medal-*.stl` — медали участникам (нужен openscad) |
+| `make instruments` | `tool-*.stl` — брендированные инструменты (нужен openscad) |
 
 `make clean` удаляет `dist/` и кэши.
 
@@ -111,6 +112,7 @@ src/ubt_race_docs/
     workbook.py        книга Excel с живыми формулами
     trophies.py        запуск openscad для кубков
     medals.py          медали участникам — тот же openscad
+    instruments.py     гравировка гонки на готовых инструментах
     route_map.py       карта трассы в цветах партнёра
     cli.py             командная строка
     background.py      фон печатного листа
