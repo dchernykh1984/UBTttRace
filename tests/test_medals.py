@@ -114,15 +114,17 @@ def test_key_teeth_are_wide_with_round_grooves() -> None:
 
 
 def test_face_elements_do_not_overlap() -> None:
-    # Раскладка лица: гонка, эмблема, роль, партнёр — сверху вниз, без наложений.
+    # Раскладка лица сверху вниз: эмблема, гонка, роль, партнёр.
     radius = model_number("medal_diameter") / 2
-    title_bottom = model_number("title_y") - model_number("text_size") / 2
+    size = model_number("text_size")
     logo_top = model_number("logo_y") + model_number("logo_height") / 2
     logo_bottom = model_number("logo_y") - model_number("logo_height") / 2
-    role_top = model_number("role_y") + (model_number("text_size") + 0.3) / 2
-    assert title_bottom > logo_top, "заголовок налезает на эмблему"
-    assert logo_bottom > role_top, "эмблема налезает на строку участника"
-    assert model_number("title_y") + model_number("text_size") < radius - 2
+    title_top = model_number("title_y") + size / 2
+    title_bottom = model_number("title_y") - size / 2
+    role_top = model_number("role_y") + size / 2
+    assert logo_top < radius - 3, "эмблема упирается в кромку"
+    assert logo_bottom > title_top, "эмблема налезает на строку гонки"
+    assert title_bottom > role_top, "строки налезают друг на друга"
     assert abs(model_number("giant_y")) + 3 < radius - 2
 
 
@@ -147,3 +149,17 @@ def test_whistle_channel_is_printable_without_supports() -> None:
 def test_lanyard_hole_does_not_break_the_rim() -> None:
     margin = model_number("lanyard_margin")
     assert margin > model_number("lanyard_hole") / 2, "отверстие вышло бы за кромку"
+
+
+def test_lanyard_hole_clears_the_engraving() -> None:
+    # Отверстие стоит на 45°, и ни строки, ни эмблема в него не упираются.
+    import math
+
+    offset = model_number("medal_diameter") / 2 - model_number("lanyard_margin")
+    x = offset * math.cos(math.radians(45))
+    y = offset * math.sin(math.radians(45))
+    edge = model_number("lanyard_hole") / 2 + 1
+    logo_half = model_number("logo_height") * 99.95 / 116.1 / 2
+    assert x - edge > logo_half, "отверстие задевает эмблему"
+    for line_y in (model_number("title_y"), model_number("role_y")):
+        assert y - edge > line_y + model_number("text_size") / 2, "отверстие задевает строку"
