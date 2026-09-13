@@ -65,10 +65,30 @@ def test_engraving_says_the_same_as_the_trophy() -> None:
     assert "Участник" in model_string("role_line")
 
 
+def test_jockey_slot_matches_a_derailleur_tooth() -> None:
+    # Прорезь под зуб ролика 12-скоростной трансмиссии: он около 2 мм шириной,
+    # прорезь чуть шире, чтобы заходила по грязи.
+    width = model_number("jockey_slot_width")
+    assert 2.4 < width < 3.4, f"прорезь {width} мм не сядет на зуб ролика"
+    assert model_number("jockey_slot_depth") > 5, "мелкая прорезь не достанет до впадины"
+    assert model_number("jockey_notch") < model_number("jockey_slot_depth")
+
+
+def test_jockey_edge_is_thin_enough_for_the_cage() -> None:
+    # Между щёчками рамки переключателя пятимиллиметровым диском не подлезть.
+    edge = model_number("jockey_edge_thickness")
+    assert edge < 2.2, f"рабочая кромка {edge} мм не войдёт в рамку"
+    assert edge > 1.0, "тоньше миллиметра кромка сломается о зуб"
+    assert model_number("jockey_edge_reach") > model_number("jockey_slot_depth")
+
+
 def test_key_driver_sticks_out_of_the_medal() -> None:
     # Шлицы у крышки внутренние, поэтому ключ — выступ, а не гнездо.
     assert model_number("cap_points") == 8, "зубцов столько же, сколько у заводского"
     assert model_number("cap_driver_height") >= 6, "короткий выступ выскочит из шлицев"
+    # Размеры сняты с готовых моделей настоящих ключей.
+    assert 15.0 < model_number("cap_outer_diameter") < 15.8
+    assert 1.0 <= model_number("cap_groove_depth") <= 1.8
     assert model_number("cap_lead_in") > 0, "без заходной фаски ключ не наденется"
 
 

@@ -3,6 +3,8 @@
 // Три исполнения, одинаковые снаружи:
 //   key         — ключ крышки натяга Shimano Hollowtech II: шлицевой выступ,
 //                 медаль работает рукояткой;
+//   jockey      — скребок ролика заднего переключателя: прорезь по кромке,
+//                 в неё заходит зуб ролика и очищается с обеих сторон;
 //   whistle     — свисток;
 //   dog-whistle — свисток повыше тоном, чтобы отгонять собак.
 //
@@ -14,7 +16,7 @@
 //   openscad -o medal-key.stl -D 'part="key"' medal.scad
 
 /* [Что печатать] */
-part = "key"; // [key, whistle, dog-whistle]
+part = "key"; // [key, whistle, dog-whistle, jockey]
 
 /* [Надписи] */
 title_line = "UBT TT · 04.10.2026";
@@ -47,15 +49,29 @@ mark_size = 2.2;
 /* [Ключ крышки шатуна] */
 // Крышка натяга Hollowtech II имеет ВНУТРЕННИЕ шлицы, поэтому ключ — это
 // торчащий из медали зубчатый выступ, а медаль служит рукояткой. Число
-// зубцов и пропорции сняты с фотографии заводского инструмента: контур
-// торца выделен по градиенту, число зубцов взято из спектра профиля,
-// а глубина и ширина впадины — из усреднённого по восьми секторам зуба.
+// зубцов и размеры сняты сечениями с готовых моделей настоящих ключей:
+// вершины ⌀15.3–15.5, впадины глубиной 1.0–1.8 мм, зубцов восемь.
 cap_points = 8;
-cap_outer_diameter = 16.0;
-cap_groove_width = 4.8;
-cap_groove_depth = 0.72;
+cap_outer_diameter = 15.4;
+cap_groove_width = 3.8;
+cap_groove_depth = 1.5;
 cap_driver_height = 8;
 cap_lead_in = 0.8;
+
+/* [Скребок ролика] */
+// Прорезь по кромке медали: в неё входит зуб ролика, стенки счищают грязь
+// с его боков, а мелкие выемки рядом достают до впадин между зубьями.
+// Размеры сняты с готового скребка под 12-скоростную цепь.
+jockey_slot_width = 2.9;
+jockey_slot_depth = 8;
+jockey_notch = 1.4;
+jockey_notch_width = 2.6;
+jockey_notch_gap = 5.5;
+// Рабочую кромку стачиваем: пятимиллиметровым диском между щёчками рамки
+// переключателя не подлезть.
+jockey_edge_thickness = 1.6;
+jockey_edge_reach = 13;
+jockey_line = ["JOCKEY", "SCRAPER"];
 
 /* [Свисток] */
 // Резонатор Гельмгольца: объём камеры и сечение окна задают тон. При этих
@@ -179,6 +195,45 @@ module whistle_void(chamber_diameter, chamber_height) {
     translate([0, 0, z]) cylinder(d = chamber_diameter, h = chamber_height);
 }
 
+// Сектор кромки, сточенный до рабочей толщины: ступенька смотрит вверх,
+// поэтому печатается без поддержек.
+module jockey_thin_edge() {
+    radius = medal_diameter / 2;
+    translate([0, 0, jockey_edge_thickness])
+        linear_extrude(height = medal_thickness)
+            polygon([
+                [0, radius - jockey_edge_reach],
+                [-radius, radius - jockey_edge_reach],
+                [-radius, radius + 1],
+                [radius, radius + 1],
+                [radius, radius - jockey_edge_reach],
+            ]);
+}
+
+module jockey_slots() {
+    radius = medal_diameter / 2;
+    translate([-jockey_slot_width / 2, radius - jockey_slot_depth, -1])
+        cube([jockey_slot_width, jockey_slot_depth + 2, medal_thickness + 2]);
+    for (side = [-1, 1])
+        translate([side * jockey_notch_gap - jockey_notch_width / 2, radius - jockey_notch, -1])
+            cube([jockey_notch_width, jockey_notch + 2, medal_thickness + 2]);
+}
+
+module jockey_medal() {
+    difference() {
+        medal_blank();
+        face_engraving();
+        lanyard();
+        jockey_thin_edge();
+        jockey_slots();
+        for (index = [0 : len(jockey_line) - 1])
+            translate([0, 15 - index * 3.4, jockey_edge_thickness - engrave_depth / 2])
+                linear_extrude(height = engrave_depth)
+                    text(jockey_line[index], font = font_name, size = mark_size,
+                         halign = "center", valign = "center");
+    }
+}
+
 module whistle_medal(chamber_diameter, chamber_height, line) {
     difference() {
         medal_blank();
@@ -194,8 +249,9 @@ module whistle_medal(chamber_diameter, chamber_height, line) {
 }
 
 if (part == "key") key_medal();
+else if (part == "jockey") jockey_medal();
 else if (part == "whistle")
     whistle_medal(whistle_chamber_diameter, whistle_chamber_height, whistle_line);
 else if (part == "dog-whistle")
     whistle_medal(dog_chamber_diameter, dog_chamber_height, dog_line);
-else assert(false, "part должен быть key, whistle или dog-whistle");
+else assert(false, "part должен быть key, jockey, whistle или dog-whistle");
