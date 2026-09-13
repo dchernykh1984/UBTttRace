@@ -48,12 +48,21 @@ def test_spacers_match_the_stock_ones() -> None:
     assert model_number("sram_thickness") == 2.8
 
 
-def test_spacer_tongue_is_stepped_thin_end_first() -> None:
-    # Тонкий конец идёт первым: им проставка находит щель Shimano, а целиком
-    # язычок садится в более широкий зазор SRAM.
+def test_spacers_point_in_opposite_directions() -> None:
+    # Язычков два, в разные стороны: тонкий под Shimano, толстый под SRAM.
+    source = MODEL_PATH.read_text(encoding="utf-8")
+    assert "spacer_tongue(shimano_thickness, 0)" in source
+    assert "spacer_tongue(sram_thickness, 180)" in source
     assert model_number("shimano_thickness") < model_number("sram_thickness")
-    assert model_number("spacer_thin_length") < model_number("spacer_tongue_length")
     assert model_number("spacer_label_depth") < model_number("shimano_thickness")
+
+
+def test_spacer_tongue_holds_itself_in_the_caliper() -> None:
+    # Без заусенцев проставка вылетает из суппорта на первой же кочке.
+    barb = model_number("spacer_barb")
+    assert barb > 0.2, "заусенец меньше сопла не напечатается"
+    assert barb < 1, "слишком крупный заусенец не даст вставить язычок"
+    assert model_number("spacer_barb_at") < model_number("spacer_tongue_length")
 
 
 def test_spacer_tongue_reaches_the_pads() -> None:
@@ -94,11 +103,25 @@ def test_key_driver_sticks_out_of_the_medal() -> None:
     assert model_number("cap_lead_in") > 0, "без заходной фаски ключ не наденется"
 
 
-def test_key_driver_leaves_the_engraving_alone() -> None:
-    # Выступ стоит в центре, надписи идут выше и ниже него.
-    outer = model_number("cap_root_diameter") / 2 + model_number("cap_tooth_height")
-    lowest_line = model_number("role_y") - model_number("text_size") / 2
-    assert lowest_line > outer, "нижняя строка упирается в шлицы"
+def test_key_teeth_are_round_like_the_factory_tool() -> None:
+    # Пазы крышки литые и скруглённые: угловатый зуб в них не садится
+    # и срезается первым.
+    source = MODEL_PATH.read_text(encoding="utf-8")
+    assert "cylinder(r = tooth" in source, "зубцы должны строиться цилиндрами"
+    assert model_number("cap_tooth_width") > 0
+
+
+def test_face_elements_do_not_overlap() -> None:
+    # Раскладка лица: гонка, эмблема, роль, партнёр — сверху вниз, без наложений.
+    radius = model_number("medal_diameter") / 2
+    title_bottom = model_number("title_y") - model_number("text_size") / 2
+    logo_top = model_number("logo_y") + model_number("logo_height") / 2
+    logo_bottom = model_number("logo_y") - model_number("logo_height") / 2
+    role_top = model_number("role_y") + (model_number("text_size") + 0.3) / 2
+    assert title_bottom > logo_top, "заголовок налезает на эмблему"
+    assert logo_bottom > role_top, "эмблема налезает на строку участника"
+    assert model_number("title_y") + model_number("text_size") < radius - 2
+    assert abs(model_number("giant_y")) + 3 < radius - 2
 
 
 def test_two_whistles_differ_in_pitch() -> None:
