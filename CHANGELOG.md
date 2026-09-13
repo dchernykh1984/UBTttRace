@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.15.2](https://github.com/dchernykh1984/UBTttRace/compare/v0.15.1...v0.15.2) (2026-09-13)
+
+
+### Исправления
+
+* start the medal face with the team emblem ([52b18a0](https://github.com/dchernykh1984/UBTttRace/commit/52b18a0c28c8bafb11f2159bd24d8d028f19c066))
+
 ## [0.15.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.15.0...v0.15.1) (2026-09-13)
 
 
