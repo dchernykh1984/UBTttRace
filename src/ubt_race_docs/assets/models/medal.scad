@@ -71,6 +71,9 @@ jockey_notch_gap = 5.5;
 // переключателя не подлезть.
 jockey_edge_thickness = 1.6;
 jockey_edge_reach = 13;
+// Прорезь уводим на свободную диагональ: сверху она развалила бы эмблему,
+// а по горизонтали перерезала бы строки.
+jockey_direction = 135;
 jockey_line = ["JOCKEY", "SCRAPER"];
 
 /* [Свисток] */
@@ -199,6 +202,7 @@ module whistle_void(chamber_diameter, chamber_height) {
 // поэтому печатается без поддержек.
 module jockey_thin_edge() {
     radius = medal_diameter / 2;
+    rotate([0, 0, jockey_direction])
     translate([0, 0, jockey_edge_thickness])
         linear_extrude(height = medal_thickness)
             polygon([
@@ -212,11 +216,13 @@ module jockey_thin_edge() {
 
 module jockey_slots() {
     radius = medal_diameter / 2;
+    rotate([0, 0, jockey_direction]) {
     translate([-jockey_slot_width / 2, radius - jockey_slot_depth, -1])
         cube([jockey_slot_width, jockey_slot_depth + 2, medal_thickness + 2]);
     for (side = [-1, 1])
         translate([side * jockey_notch_gap - jockey_notch_width / 2, radius - jockey_notch, -1])
             cube([jockey_notch_width, jockey_notch + 2, medal_thickness + 2]);
+    }
 }
 
 module jockey_medal() {
@@ -226,6 +232,7 @@ module jockey_medal() {
         lanyard();
         jockey_thin_edge();
         jockey_slots();
+        rotate([0, 0, jockey_direction])
         for (index = [0 : len(jockey_line) - 1])
             translate([0, 15 - index * 3.4, jockey_edge_thickness - engrave_depth / 2])
                 linear_extrude(height = engrave_depth)

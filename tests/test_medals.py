@@ -74,6 +74,23 @@ def test_jockey_slot_matches_a_derailleur_tooth() -> None:
     assert model_number("jockey_notch") < model_number("jockey_slot_depth")
 
 
+def test_jockey_slot_misses_the_engraving() -> None:
+    # Прорезь режет медаль насквозь: сверху она развалила бы эмблему,
+    # по горизонтали — перерезала бы строки.
+    import math
+
+    direction = model_number("jockey_direction")
+    radius = model_number("medal_diameter") / 2
+    depth = model_number("jockey_slot_depth")
+    # самая глубокая точка прорези
+    x = -(radius - depth) * math.sin(math.radians(direction))
+    y = (radius - depth) * math.cos(math.radians(direction))
+    logo_half = model_number("logo_height") * 99.95 / 116.1 / 2
+    assert abs(x) > logo_half + model_number("jockey_slot_width"), "прорезь заденет эмблему"
+    for line_y in (model_number("title_y"), model_number("role_y")):
+        assert abs(y - line_y) > model_number("text_size"), "прорезь заденет строку"
+
+
 def test_jockey_edge_is_thin_enough_for_the_cage() -> None:
     # Между щёчками рамки переключателя пятимиллиметровым диском не подлезть.
     edge = model_number("jockey_edge_thickness")
