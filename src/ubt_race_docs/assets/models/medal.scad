@@ -50,8 +50,9 @@ mark_size = 2.2;
 // зубцов и пропорции сняты с фотографии заводского инструмента: десять
 // широких округлых зубцов, между ними узкие неглубокие впадины.
 cap_points = 10;
-cap_outer_diameter = 17.2;
-cap_groove_width = 2.2;
+cap_outer_diameter = 16.0;
+cap_groove_width = 2.4;
+cap_groove_depth = 0.6;
 cap_driver_height = 8;
 cap_lead_in = 0.8;
 
@@ -142,10 +143,12 @@ module cap_driver() {
                 cylinder(d = outer, h = cap_driver_height);
                 // Впадины узкие и круглые, зубцы между ними широкие — так же,
                 // как у заводского ключа: широкий зуб не срезает пазы крышки.
+                // Канавка мелкая: её окружность отодвинута наружу так, чтобы
+                // в тело зашла только глубина cap_groove_depth.
                 for (index = [0 : cap_points - 1])
                     rotate([0, 0, index * 360 / cap_points])
-                        translate([0, outer / 2, -1])
-                            cylinder(d = cap_groove_width, h = cap_driver_height + 2, $fn = 24);
+                        translate([0, outer / 2 + cap_groove_width / 2 - cap_groove_depth, -1])
+                            cylinder(d = cap_groove_width, h = cap_driver_height + 2, $fn = 32);
             }
             // заходное сужение: без него ключ приходится ловить вслепую
             cylinder(d1 = outer + 2, d2 = outer - 2 * cap_lead_in, h = cap_driver_height);

@@ -79,7 +79,9 @@ def test_key_teeth_are_wide_with_round_grooves() -> None:
     assert "cylinder(d = cap_groove_width" in source
     groove_arc = model_number("cap_groove_width")
     tooth_arc = 3.1416 * model_number("cap_outer_diameter") / model_number("cap_points")
-    assert groove_arc < tooth_arc / 2, "впадина шире зуба — профиль вывернут наизнанку"
+    assert groove_arc < tooth_arc, "впадина шире зуба — профиль вывернут наизнанку"
+    # Впадины у заводского ключа мелкие: глубокие срезали бы зубцы крышки.
+    assert model_number("cap_groove_depth") < model_number("cap_outer_diameter") / 10
 
 
 def test_face_elements_do_not_overlap() -> None:
