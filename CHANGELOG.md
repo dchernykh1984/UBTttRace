@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.14.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.13.0...v0.14.0) (2026-09-13)
+
+
+### Новое
+
+* add participant medals that double as bike tools ([11bfc8d](https://github.com/dchernykh1984/UBTttRace/commit/11bfc8dddbdc7604795bcef9936bea9df603a958))
+* cut the medals from the command line ([ee3169e](https://github.com/dchernykh1984/UBTttRace/commit/ee3169ec58dcb83da94dabeb23229eef3bf0b654))
+
+
+### Документация
+
+* describe the participant medals ([146a755](https://github.com/dchernykh1984/UBTttRace/commit/146a7551a56a350fd8548e8f9afe0875d17e171e))
+* point the readme at the agent context ([0876b4e](https://github.com/dchernykh1984/UBTttRace/commit/0876b4e286e8463c7c97cdf03d3d2fcafc4237e2))
+* write down how this repository is worked on ([1a32d63](https://github.com/dchernykh1984/UBTttRace/commit/1a32d63a81768f60efe542175763e59e45b11d7d))
+
 ## [0.13.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.12.2...v0.13.0) (2026-08-29)
 
 
