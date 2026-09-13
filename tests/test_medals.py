@@ -41,37 +41,6 @@ def test_medal_is_a_fifty_millimetre_disc() -> None:
     assert model_number("medal_thickness") == 5
 
 
-def test_spacers_match_the_stock_ones() -> None:
-    # Толщины штатных проставок: Shimano кладёт 1.8 мм, SRAM для шоссейных
-    # Red/Force/Rival AXS — 2.8 мм.
-    assert model_number("shimano_thickness") == 1.8
-    assert model_number("sram_thickness") == 2.8
-
-
-def test_spacers_point_in_opposite_directions() -> None:
-    # Язычков два, в разные стороны: тонкий под Shimano, толстый под SRAM.
-    source = MODEL_PATH.read_text(encoding="utf-8")
-    assert "spacer_tongue(shimano_thickness, 0)" in source
-    assert "spacer_tongue(sram_thickness, 180)" in source
-    assert model_number("shimano_thickness") < model_number("sram_thickness")
-    assert model_number("spacer_label_depth") < model_number("shimano_thickness")
-
-
-def test_spacer_tongue_holds_itself_in_the_caliper() -> None:
-    # Без заусенцев проставка вылетает из суппорта на первой же кочке.
-    barb = model_number("spacer_barb")
-    assert barb > 0.2, "заусенец меньше сопла не напечатается"
-    assert barb < 1, "слишком крупный заусенец не даст вставить язычок"
-    assert model_number("spacer_barb_at") < model_number("spacer_tongue_length")
-
-
-def test_spacer_tongue_reaches_the_pads() -> None:
-    # Язычок должен выйти за кромку медали настолько, чтобы перекрыть колодку.
-    stick_out = model_number("spacer_tongue_length") - 3
-    assert stick_out > 12, f"язычок торчит всего на {stick_out:.1f} мм"
-    assert model_number("spacer_tongue_width") < 16, "шире щели для ротора не пролезет"
-
-
 def model_string(name: str) -> str:
     """Строковый параметр модели."""
     match = re.search(rf'^{name} = "(.*)";', MODEL_PATH.read_text(encoding="utf-8"), re.M)
@@ -98,7 +67,7 @@ def test_engraving_says_the_same_as_the_trophy() -> None:
 
 def test_key_driver_sticks_out_of_the_medal() -> None:
     # Шлицы у крышки внутренние, поэтому ключ — выступ, а не гнездо.
-    assert model_number("cap_points") == 8
+    assert model_number("cap_points") == 10, "зубцов столько же, сколько у заводского"
     assert model_number("cap_driver_height") >= 6, "короткий выступ выскочит из шлицев"
     assert model_number("cap_lead_in") > 0, "без заходной фаски ключ не наденется"
 

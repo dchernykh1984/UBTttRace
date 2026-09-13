@@ -1,8 +1,6 @@
 // Медаль участника UBT TT — сувенир, который остаётся инструментом.
 //
 // Три исполнения, одинаковые снаружи:
-//   spacer      — транспортная проставка под колодки: ступенчатый язычок,
-//                 дальняя часть 1.8 мм (Shimano), ближняя 2.8 мм (SRAM);
 //   key         — ключ крышки натяга Shimano Hollowtech II: шлицевой выступ,
 //                 медаль работает рукояткой;
 //   whistle     — свисток;
@@ -13,10 +11,10 @@
 // к плите), а функциональная сторона со ступеньками и полостями смотрит
 // вверх и печатается без единой поддержки.
 //
-//   openscad -o medal-spacer.stl -D 'part="spacer"' medal.scad
+//   openscad -o medal-key.stl -D 'part="key"' medal.scad
 
 /* [Что печатать] */
-part = "spacer"; // [spacer, key, whistle, dog-whistle]
+part = "key"; // [key, whistle, dog-whistle]
 
 /* [Надписи] */
 title_line = "UBT TT · 04.10.2026";
@@ -44,29 +42,16 @@ edge_chamfer = 0.7;
 lanyard_hole = 4;
 lanyard_margin = 4.5;
 
-/* [Проставка под колодки] */
-// Толщины взяты у штатных проставок: Shimano кладёт 1.8 мм, SRAM для
-// шоссейных Red/Force/Rival AXS — 2.8 мм. Проверять на своих тормозах.
-shimano_thickness = 1.8;
-sram_thickness = 2.8;
-// Проставка заходит в узкую щель для ротора, поэтому это торчащий из медали
-// язычок, а не сточенная кромка: кромкой в суппорт не залезть. Язычок
-// ступенчатый по длине — тонким концом в Shimano, целиком в SRAM.
-spacer_tongue_length = 16;
-spacer_tongue_width = 13;
-spacer_barb = 0.45;
-spacer_barb_at = 7;
-spacer_label_size = 2.2;
-spacer_label_depth = 0.35;
+mark_size = 2.2;
 
 /* [Ключ крышки шатуна] */
 // Крышка натяга Hollowtech II имеет ВНУТРЕННИЕ шлицы, поэтому ключ — это
-// торчащий из медали восьмизубый выступ, а медаль служит рукояткой.
-// Диаметр снят с чужого инструмента приблизительно: измерьте свой
-// штангенциркулем и поправьте здесь.
-cap_points = 8;
+// торчащий из медали зубчатый выступ, а медаль служит рукояткой. Число
+// зубцов и пропорции сняты с фотографии заводского инструмента: десять
+// широких округлых зубцов, между ними узкие неглубокие впадины.
+cap_points = 10;
 cap_outer_diameter = 17.2;
-cap_groove_width = 2.8;
+cap_groove_width = 2.2;
 cap_driver_height = 8;
 cap_lead_in = 0.8;
 
@@ -147,55 +132,8 @@ module lanyard() {
         cylinder(d = lanyard_hole, h = medal_thickness + 2);
 }
 
-// Язычок проставки торчит из кромки медали и входит в щель для ротора.
-// Язычков два, в противоположные стороны: тонкий под Shimano, толстый под
-// SRAM. Боковые заусенцы держат проставку в суппорте, чтобы она не выпала
-// в багажнике: заходят легко, обратно упираются.
-module spacer_tongue(thickness, direction) {
-    radius = medal_diameter / 2;
-    base = radius - 3;
-    tip = base + spacer_tongue_length;
-    rotate([0, 0, direction]) {
-        hull() {
-            translate([-spacer_tongue_width / 2, base, 0])
-                cube([spacer_tongue_width, 0.1, thickness]);
-            translate([0, tip - spacer_tongue_width / 2, 0])
-                cylinder(d = spacer_tongue_width, h = thickness, $fn = 48);
-        }
-        for (side = [-1, 1])
-            translate([side * spacer_tongue_width / 2, base + spacer_barb_at, 0])
-                rotate([0, 0, side * 30])
-                    cube([spacer_barb, spacer_barb * 3, thickness]);
-    }
-}
-
-module spacer_label(line, thickness, direction) {
-    radius = medal_diameter / 2;
-    rotate([0, 0, direction])
-        translate([0, radius - 9, medal_thickness - engrave_depth])
-            rotate([0, 0, direction == 0 ? 0 : 180])
-                linear_extrude(height = engrave_depth * 2)
-                    text(line, font = font_name, size = spacer_label_size,
-                         halign = "center", valign = "center");
-}
-
-module spacer_medal() {
-    difference() {
-        union() {
-            medal_blank();
-            spacer_tongue(shimano_thickness, 0);
-            spacer_tongue(sram_thickness, 180);
-        }
-        face_engraving();
-        lanyard();
-        spacer_label("SHIMANO 1.8", shimano_thickness, 0);
-        spacer_label("SRAM 2.8", sram_thickness, 180);
-    }
-}
-
-// Ключ: шлицевой выступ под внутренние зубцы крышки натяга. Зубцы круглые,
-// как у заводского инструмента: угловатые не входят в литые скруглённые пазы
-// и срезаются первыми. Печатается стоймя, поэтому обходится без поддержек.
+// Ключ: шлицевой выступ под внутренние зубцы крышки натяга. Печатается
+// стоймя вместе с медалью, поэтому обходится без поддержек.
 module cap_driver() {
     outer = cap_outer_diameter;
     translate([0, 0, medal_thickness])
@@ -246,15 +184,14 @@ module whistle_medal(chamber_diameter, chamber_height, line) {
         for (index = [0 : len(line) - 1])
             translate([0, 17 - index * 3.4, medal_thickness - engrave_depth])
                 linear_extrude(height = engrave_depth * 2)
-                    text(line[index], font = font_name, size = spacer_label_size,
+                    text(line[index], font = font_name, size = mark_size,
                          halign = "center", valign = "center");
     }
 }
 
-if (part == "spacer") spacer_medal();
-else if (part == "key") key_medal();
+if (part == "key") key_medal();
 else if (part == "whistle")
     whistle_medal(whistle_chamber_diameter, whistle_chamber_height, whistle_line);
 else if (part == "dog-whistle")
     whistle_medal(dog_chamber_diameter, dog_chamber_height, dog_line);
-else assert(false, "part должен быть spacer, key, whistle или dog-whistle");
+else assert(false, "part должен быть key, whistle или dog-whistle");
