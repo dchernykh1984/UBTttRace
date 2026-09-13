@@ -4,6 +4,7 @@ ubt-race-docs all --out dist
 ubt-race-docs bibs --first 1 --last 300
 ubt-race-docs trophies --out dist
 ubt-race-docs map --out dist
+ubt-race-docs medals --out dist
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from pathlib import Path
 from . import __version__
 from .bibs import FIRST_BIB, LAST_BIB, build_bibs
 from .certificates import SPARE_CERTIFICATES, build_certificates
+from .medals import render_all as render_medals
 from .route_map import render as render_map
 from .trophies import render_all
 from .waivers import FORMS, build_waiver
@@ -102,6 +104,8 @@ def _parser() -> argparse.ArgumentParser:
 
     with_output(commands.add_parser("map", help="карта трассы для партнёров"))
 
+    with_output(commands.add_parser("medals", help="STL медалей участникам (нужен openscad)"))
+
     everything = with_output(commands.add_parser("all", help="все документы сразу"))
     everything.add_argument("--first", type=int, default=FIRST_BIB, help="первый номер")
     everything.add_argument("--last", type=int, default=LAST_BIB, help="последний номер")
@@ -116,7 +120,7 @@ def _parser() -> argparse.ArgumentParser:
     everything.add_argument(
         "--with-trophies",
         action="store_true",
-        help="заодно нарезать STL кубков (нужен openscad)",
+        help="заодно нарезать STL кубков и медалей (нужен openscad)",
     )
 
     return parser
@@ -153,6 +157,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             produced = render_all(output)
         elif arguments.command == "map":
             produced = [render_map(output / "map.png")]
+        elif arguments.command == "medals":
+            produced = render_medals(output)
         else:
             produced = build_documents(
                 output,
@@ -164,6 +170,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             if arguments.with_trophies:
                 produced += render_all(output)
+                produced += render_medals(output)
     except ValueError as error:
         print(f"Ошибка: {error}")
         return 2

@@ -2,7 +2,7 @@ UV   ?= uv
 DIST ?= dist
 
 .PHONY: help install lint format typecheck test \
-        build kit bibs certificates waivers workbook models map clean
+        build kit bibs certificates waivers workbook models map medals clean
 
 help:
 	@echo "Разработка:"
@@ -20,6 +20,7 @@ help:
 	@echo "  make workbook       таблица призовых"
 	@echo "  make models         STL кубков (нужен openscad)"
 	@echo "  make map            карта трассы для партнёров"
+	@echo "  make medals         STL медалей участникам (нужен openscad)"
 	@echo ""
 	@echo "  make clean          удалить ./$(DIST) и кэши"
 
@@ -64,6 +65,9 @@ models:
 
 map:
 	$(UV) run ubt-race-docs map --out $(DIST)
+
+medals:
+	$(UV) run ubt-race-docs medals --out $(DIST)
 
 clean:
 	rm -rf $(DIST) .pytest_cache .ruff_cache .mypy_cache
