@@ -65,9 +65,8 @@ spacer_label_depth = 0.35;
 // Диаметр снят с чужого инструмента приблизительно: измерьте свой
 // штангенциркулем и поправьте здесь.
 cap_points = 8;
-cap_root_diameter = 14.2;
-cap_tooth_height = 1.3;
-cap_tooth_width = 3.0;
+cap_outer_diameter = 17.2;
+cap_groove_width = 2.8;
 cap_driver_height = 8;
 cap_lead_in = 0.8;
 
@@ -194,23 +193,20 @@ module spacer_medal() {
 // как у заводского инструмента: угловатые не входят в литые скруглённые пазы
 // и срезаются первыми. Печатается стоймя, поэтому обходится без поддержек.
 module cap_driver() {
-    root = cap_root_diameter;
-    tooth = cap_tooth_width / 2;
+    outer = cap_outer_diameter;
     translate([0, 0, medal_thickness])
         intersection() {
-            union() {
-                cylinder(d = root, h = cap_driver_height);
+            difference() {
+                cylinder(d = outer, h = cap_driver_height);
+                // Впадины узкие и круглые, зубцы между ними широкие — так же,
+                // как у заводского ключа: широкий зуб не срезает пазы крышки.
                 for (index = [0 : cap_points - 1])
                     rotate([0, 0, index * 360 / cap_points])
-                        translate([0, root / 2, 0])
-                            cylinder(r = tooth, h = cap_driver_height, $fn = 32);
+                        translate([0, outer / 2, -1])
+                            cylinder(d = cap_groove_width, h = cap_driver_height + 2, $fn = 24);
             }
-            // заходный конус: без него ключ приходится ловить вслепую
-            cylinder(
-                d1 = root + 4 * tooth,
-                d2 = root + 2 * tooth - 2 * cap_lead_in,
-                h = cap_driver_height
-            );
+            // заходное сужение: без него ключ приходится ловить вслепую
+            cylinder(d1 = outer + 2, d2 = outer - 2 * cap_lead_in, h = cap_driver_height);
         }
 }
 

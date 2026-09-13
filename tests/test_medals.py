@@ -103,12 +103,14 @@ def test_key_driver_sticks_out_of_the_medal() -> None:
     assert model_number("cap_lead_in") > 0, "без заходной фаски ключ не наденется"
 
 
-def test_key_teeth_are_round_like_the_factory_tool() -> None:
-    # Пазы крышки литые и скруглённые: угловатый зуб в них не садится
-    # и срезается первым.
+def test_key_teeth_are_wide_with_round_grooves() -> None:
+    # У заводского ключа зубцы широкие, а впадины между ними узкие
+    # и круглые — строим их вычитанием цилиндров, а не наращиванием.
     source = MODEL_PATH.read_text(encoding="utf-8")
-    assert "cylinder(r = tooth" in source, "зубцы должны строиться цилиндрами"
-    assert model_number("cap_tooth_width") > 0
+    assert "cylinder(d = cap_groove_width" in source
+    groove_arc = model_number("cap_groove_width")
+    tooth_arc = 3.1416 * model_number("cap_outer_diameter") / model_number("cap_points")
+    assert groove_arc < tooth_arc / 2, "впадина шире зуба — профиль вывернут наизнанку"
 
 
 def test_face_elements_do_not_overlap() -> None:
