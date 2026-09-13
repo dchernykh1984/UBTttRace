@@ -44,13 +44,15 @@ chain_giant_width = 22;
 cassette_file = "vendor/cassette-cleaner.stl";
 cassette_thickness = 4;
 cassette_engrave = 0.5;
-cassette_text_size = 3.0;
-cassette_logo_at = [14, -2];
-cassette_logo_height = 10;
-cassette_title_at = [46, 2];
-cassette_role_at = [46, -4];
-cassette_giant_at = [46, -11];
-cassette_giant_width = 18;
+// Тот же порядок, что и на планке измерителя: эмблема, надписи, партнёр —
+// в одну линию вдоль детали.
+cassette_text_size = 2.5;
+cassette_logo_at = [14, -3];
+cassette_logo_height = 9;
+cassette_title_at = [42, -1];
+cassette_role_at = [42, -6.5];
+cassette_giant_at = [72, -4];
+cassette_giant_width = 12;
 
 $fn = 48;
 
