@@ -23,9 +23,14 @@ def test_vendor_licences_are_documented() -> None:
     assert "printables.com" in readme
 
 
+def test_files_are_named_like_the_other_medals() -> None:
+    # Для участника это такая же награда, только другой формы.
+    assert all(task.filename.startswith("medal-") for task in render_plan())
+
+
 def test_every_instrument_is_cut_into_its_own_file() -> None:
     plan = {task.filename: task for task in render_plan()}
-    assert set(plan) == {f"tool-{kind}.stl" for kind, _ in KINDS}
+    assert set(plan) == {f"medal-{kind}.stl" for kind, _ in KINDS}
 
 
 def test_model_handles_every_kind() -> None:
