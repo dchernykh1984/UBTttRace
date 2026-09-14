@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.17.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.17.0...v0.17.1) (2026-09-14)
+
+
+### Исправления
+
+* enlarge the engraving on the cassette tool ([efa9e5b](https://github.com/dchernykh1984/UBTttRace/commit/efa9e5bf1cdcdac31f38aa80a7d5e53e266d36d5))
+* pack the medal face with the largest type that fits ([89b95ae](https://github.com/dchernykh1984/UBTttRace/commit/89b95ae62bd3d2119f9e6567241a6315c796d92d))
+
 ## [0.17.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.16.2...v0.17.0) (2026-09-14)
 
 
