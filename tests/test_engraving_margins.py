@@ -154,6 +154,11 @@ def chain_boxes() -> dict[str, Box]:
             text_width(line("title_line"), SANS_BOLD, size / ASCENT),
             size * 1.35,
         ),
+        "участник": (
+            *point("chain_role_at"),
+            text_width(line("role_line"), SANS_BOLD, number("chain_role_size") / ASCENT),
+            number("chain_role_size") * 1.35,
+        ),
         "партнёр": (
             *point("chain_giant_at"),
             number("chain_giant_width"),

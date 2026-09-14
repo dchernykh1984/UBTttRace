@@ -127,19 +127,28 @@ def test_gauge_is_stiff() -> None:
     assert model_number("chain_thickness") >= 5
 
 
-def test_gauge_engraving_sits_on_one_line() -> None:
-    # На спинке всё выстроено по её середине: гонка, потом партнёр.
+def test_gauge_text_is_stacked_and_clear_of_the_partner() -> None:
+    # Две строки стоят столбиком по одной оси, партнёр — справа от них.
     from ubt_race_docs.fonts import SANS_BOLD, text_width
 
     text_x, text_y = model_point("chain_text_at")
+    role_x, role_y = model_point("chain_role_at")
     giant_x, giant_y = model_point("chain_giant_at")
-    assert text_y == giant_y == 0, "строка и партнёр не на середине спинки"
-    half_text = (
-        text_width(model_line("title_line"), SANS_BOLD, model_number("chain_text_size") / ASCENT)
-        / 2
-    )
+    assert text_x == role_x, "строки не выровнены друг под другом"
+    assert text_y > role_y, "участник должен стоять под гонкой"
+    assert giant_y == 0, "партнёр не на середине спинки"
+
+    def half(name: str, size: str) -> float:
+        return text_width(model_line(name), SANS_BOLD, model_number(size) / ASCENT) / 2
+
     half_giant = model_number("chain_giant_width") / 2
-    assert text_x + half_text < giant_x - half_giant, "логотип партнёра налезает на дату"
+    for name, size in (("title_line", "chain_text_size"), ("role_line", "chain_role_size")):
+        assert text_x + half(name, size) < giant_x - half_giant, "строка налезает на партнёра"
+
+
+def test_gauge_says_the_same_as_the_medal() -> None:
+    # На измерителе то же самое, что на медали: гонка и кого награждаем.
+    assert "Участник" in model_line("role_line")
 
 
 def test_gauge_marks_stand_by_their_own_teeth() -> None:
