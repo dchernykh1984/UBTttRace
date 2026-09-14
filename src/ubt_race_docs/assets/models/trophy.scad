@@ -156,6 +156,17 @@ module feet() {
         translate([x - foot_width / 2, -foot_sink]) square([foot_width, foot_depth]);
 }
 
+// На стол велосипед кладётся правым боком вниз: этой стороной он и
+// начинает печататься. Гравировка от переворота не страдает — это поворот,
+// а не зеркало, и каждая сторона по-прежнему читается со своей стороны.
+// В сборе (`part="all"`) велосипед стоит как стоял, переворот только
+// для отдельной печати.
+module printed_bike() {
+    translate([0, 0, frame_thickness])
+        rotate([180, 0, 0])
+            bike();
+}
+
 module bike() {
     difference() {
         linear_extrude(height = frame_thickness) {
@@ -322,6 +333,6 @@ module standing_cake() {
 }
 
 if (part == "base") base();
-else if (part == "bike") bike();
+else if (part == "bike") printed_bike();
 else if (part == "cake") cake();
 else { base(); standing_bike(); standing_cake(); }

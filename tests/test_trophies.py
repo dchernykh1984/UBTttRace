@@ -106,6 +106,21 @@ def test_model_compiles_with_the_engraving(tmp_path: Path) -> None:
     assert "ubt-logo.svg" in csg or "polygon" in csg
 
 
+def test_bike_is_printed_right_side_down() -> None:
+    # На стол велосипед кладётся правым боком вниз — с него и начинается
+    # печать. Это поворот, а не зеркало, поэтому гравировка на обеих
+    # сторонах по-прежнему читается со своей стороны.
+    model = MODEL_PATH.read_text(encoding="utf-8")
+    assert 'part == "bike") printed_bike()' in model, "на печать уходит неперевёрнутый велосипед"
+    body = model[model.index("module printed_bike()") :]
+    body = body[: body.index("module bike()")]
+    assert "rotate([180, 0, 0])" in body, "переворота нет"
+    assert "mirror" not in body, "зеркало перевернуло бы и гравировку"
+    # В сборе велосипед стоит как стоял: переворот только для отдельной печати.
+    standing = model[model.index("module standing_bike()") :]
+    assert "printed_bike" not in standing[: standing.index("}")]
+
+
 def test_model_engraves_with_the_font_we_ship() -> None:
     assert 'font_name = "DejaVu Sans' in MODEL_PATH.read_text(encoding="utf-8")
 
