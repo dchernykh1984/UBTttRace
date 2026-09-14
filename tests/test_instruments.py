@@ -1,26 +1,60 @@
-"""Проверки брендированных инструментов гонки."""
+"""Проверки инструментов гонки."""
 
 import re
 
 from ubt_race_docs.instruments import KINDS, MODEL_PATH, VENDOR_DIR, render_plan
 
+ASCENT = 0.72
+"""Доля em, по которой OpenSCAD отмеряет `size` у текста в DejaVu."""
+
+
+def source() -> str:
+    return MODEL_PATH.read_text(encoding="utf-8")
+
 
 def model_number(name: str) -> float:
-    match = re.search(rf"^{name} = (-?[0-9.]+);", MODEL_PATH.read_text(encoding="utf-8"), re.M)
+    match = re.search(rf"^{name} = (-?[0-9.]+);", source(), re.M)
     assert match is not None, f"в модели нет параметра {name}"
     return float(match.group(1))
 
 
+def model_point(name: str) -> tuple[float, float]:
+    """Координаты `[x, y]` из параметра модели."""
+    match = re.search(rf"^{name} = \[(-?[0-9.]+), *(-?[0-9.]+)\];", source(), re.M)
+    assert match is not None, f"в модели нет параметра {name}"
+    return float(match.group(1)), float(match.group(2))
+
+
+def model_line(name: str) -> str:
+    match = re.search(rf'^{name} = "(.*)";', source(), re.M)
+    assert match is not None, f"в модели нет параметра {name}"
+    return match.group(1)
+
+
+def model_numbers(name: str) -> list[float]:
+    match = re.search(rf"^{name} = \[([-0-9.,\s]*)\];", source(), re.M)
+    assert match is not None, f"в модели нет параметра {name}"
+    return [float(v) for v in match.group(1).split(",")]
+
+
+def chain_span(wear: float) -> float:
+    """Пролёт между внешними гранями пары щупов для заданного износа."""
+    links = model_number("chain_links")
+    pitch = model_number("chain_pitch")
+    return links * pitch * (1 + wear / 100) - model_number("chain_roller")
+
+
 def test_vendor_models_are_shipped() -> None:
-    for name in ("chain-wear-indicator.stl", "cassette-cleaner.stl"):
-        assert (VENDOR_DIR / name).is_file(), f"нет исходной модели {name}"
+    assert (VENDOR_DIR / "cassette-cleaner.stl").is_file(), "нет исходной модели скребка"
 
 
 def test_vendor_licences_are_documented() -> None:
     # Формы рисовали не мы: источник и лицензия должны быть названы рядом.
     readme = (VENDOR_DIR / "README.md").read_text(encoding="utf-8")
-    assert "CC0" in readme and "CC BY 4.0" in readme
+    assert "CC BY 4.0" in readme
     assert "printables.com" in readme
+    # И там же сказано, почему двух моделей здесь нет.
+    assert "CC BY-NC" in readme
 
 
 def test_files_are_named_like_the_other_medals() -> None:
@@ -34,9 +68,8 @@ def test_every_instrument_is_cut_into_its_own_file() -> None:
 
 
 def test_model_handles_every_kind() -> None:
-    source = MODEL_PATH.read_text(encoding="utf-8")
     for kind, _ in KINDS:
-        assert f'part == "{kind}"' in source
+        assert f'part == "{kind}"' in source()
 
 
 def test_engraving_does_not_weaken_the_tools() -> None:
@@ -48,59 +81,88 @@ def test_engraving_does_not_weaken_the_tools() -> None:
         assert depth < thickness / 4, f"{tool}: гравировка {depth} мм при толщине {thickness}"
 
 
-def model_point(name: str) -> tuple[float, float]:
-    """Координаты `[x, y]` из параметра модели."""
-    match = re.search(
-        rf"^{name} = \[(-?[0-9.]+), *(-?[0-9.]+)\];",
-        MODEL_PATH.read_text(encoding="utf-8"),
-        re.M,
-    )
-    assert match is not None, f"в модели нет параметра {name}"
-    return float(match.group(1)), float(match.group(2))
+def test_gauge_measures_a_real_chain() -> None:
+    # Цепь у всех шоссейных трансмиссий одна и та же: шаг полдюйма,
+    # ролик ⌀7.75. От этих двух цифр и считается пролёт между щупами.
+    assert model_number("chain_pitch") == 12.7
+    assert 7.5 <= model_number("chain_roller") <= 8.0
+    marks = model_numbers("chain_marks")
+    assert marks == [0.5, 1.0], "метки износа: 0.5 % для 11–12 скоростей и 1.0 % для старых"
+    for wear in marks:
+        expected = model_number("chain_links") * 12.7 * (1 + wear / 100) - model_number(
+            "chain_roller"
+        )
+        assert abs(chain_span(wear) - expected) < 1e-9
 
 
-def model_line(name: str) -> str:
-    match = re.search(rf'^{name} = "(.*)";', MODEL_PATH.read_text(encoding="utf-8"), re.M)
-    assert match is not None, f"в модели нет параметра {name}"
-    return match.group(1)
+def test_gauge_teeth_land_in_the_same_kind_of_gap() -> None:
+    # Просветы между роликами чередуются: узкие между внутренними пластинами
+    # и широкие между внешними. Чтобы оба щупа попадали в одинаковые,
+    # между ними должно быть нечётное число шагов.
+    assert model_number("chain_links") % 2 == 1
 
 
-def test_ruler_engraving_sits_on_one_line_without_overlaps() -> None:
-    # На планке всё выстроено по её середине: эмблема, строка, партнёр.
+def test_gauge_tooth_enters_the_gap() -> None:
+    pitch = model_number("chain_pitch")
+    roller = model_number("chain_roller")
+    tooth = model_number("chain_tooth")
+    assert tooth < pitch - roller, "щуп толще просвета новой цепи — не войдёт никогда"
+    # Дальний щуп стоит в своём просвете: слева ролик, справа следующий.
+    for wear in model_numbers("chain_marks"):
+        worn = pitch * (1 + wear / 100)
+        far = chain_span(wear)
+        assert far - tooth >= (model_number("chain_links") - 1) * worn, "щуп сел не в тот просвет"
+    # Между внутренними пластинами 12-скоростной цепи около 2.2 мм.
+    assert model_number("chain_tooth_thickness") <= 2.2
+    # Пластины цепи высотой около 11 мм, и спинка упирается в их кромку.
+    # Ролики щуп задевает своей прямой частью, а не сужением у кончика:
+    # иначе он коснулся бы их выше самого широкого места и соврал.
+    flat = model_number("chain_tooth_reach") - model_number("chain_tooth_lead")
+    assert flat > 11 / 2, "прямая часть щупа не достаёт до оси ролика"
+
+
+def test_gauge_is_stiff() -> None:
+    # Прежний покупной измеритель был 2 мм толщиной и гнулся в руках,
+    # из-за чего показывал что попало.
+    assert model_number("chain_thickness") >= 5
+
+
+def test_gauge_engraving_sits_on_one_line() -> None:
+    # На спинке всё выстроено по её середине: гонка, потом партнёр.
     from ubt_race_docs.fonts import SANS_BOLD, text_width
 
-    ascent = 0.7598
     text_x, text_y = model_point("chain_text_at")
-    logo_x, logo_y = model_point("chain_logo_at")
     giant_x, giant_y = model_point("chain_giant_at")
-    assert text_y == logo_y == giant_y, "элементы не на одной линии"
-
+    assert text_y == giant_y == 0, "строка и партнёр не на середине спинки"
     half_text = (
-        text_width(model_line("title_line"), SANS_BOLD, model_number("chain_text_size") / ascent)
+        text_width(model_line("title_line"), SANS_BOLD, model_number("chain_text_size") / ASCENT)
         / 2
     )
-    half_logo = model_number("chain_logo_height") * 99.95 / 116.1 / 2
     half_giant = model_number("chain_giant_width") / 2
-    assert logo_x + half_logo < text_x - half_text, "эмблема налезает на строку"
     assert text_x + half_text < giant_x - half_giant, "логотип партнёра налезает на дату"
-    assert giant_x + half_giant < 140, "логотип партнёра уходит на щуп"
+
+
+def test_gauge_marks_stand_by_their_own_teeth() -> None:
+    # Проценты подписаны у той кромки, чьи щупы их меряют, — иначе
+    # инструментом не пользоваться.
+    mark_x, mark_y = model_point("chain_mark_at")
+    assert mark_y > 0, "метка должна стоять у кромки, а не по середине"
+    assert mark_y + model_number("chain_mark_size") * 1.35 / 2 < model_number("chain_spine") / 2
+    assert abs(mark_x - chain_span(1.0)) < 10, "метка стоит не у своих щупов"
 
 
 def test_cassette_is_engraved_on_the_clean_side() -> None:
     # Лицевую занимает авторская надпись, поэтому гравируем обратную сторону.
-    source = MODEL_PATH.read_text(encoding="utf-8")
-    assert "module back_engraving()" in source
-    assert "mirror([1, 0, 0])" in source, "на обороте надписи надо зеркалить"
+    assert "module back_engraving()" in source()
+    assert "mirror([1, 0, 0])" in source(), "на обороте надписи надо зеркалить"
     # Читают надписи с обратной стороны, поэтому в модели порядок обратный:
-    # партнёр слева, надписи в середине, эмблема справа.
+    # партнёр слева, надписи справа.
     giant_x, _ = model_point("cassette_giant_at")
     title_x, _ = model_point("cassette_title_at")
-    logo_x, _ = model_point("cassette_logo_at")
-    assert giant_x < title_x < logo_x, "порядок элементов сбился"
+    assert giant_x < title_x, "порядок элементов сбился"
 
 
-def test_engraving_keeps_clear_of_the_working_edges() -> None:
-    # У измерителя щупы на торцах: до X = 5 и после X = 140 трогать нельзя.
-    for name in ("chain_text_at", "chain_logo_at", "chain_giant_at"):
-        x, _ = model_point(name)
-        assert 10 < x < 135, f"{name}: гравировка заходит на рабочую часть, X={x}"
+def test_tools_carry_no_team_emblem() -> None:
+    # Эмблему убрали со всех медалей: мелких деталей в ней столько,
+    # что на печати выходит каша.
+    assert "ubt-logo" not in source(), "эмблема вернулась на инструменты"
