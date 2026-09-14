@@ -26,9 +26,9 @@ text_size = 4.0;
 text_depth = 0.8;
 text_step = 6.5;
 logo_height = 28;
-wheel_logo_height = 46;
+wheel_logo_height = 56;
 giant_base_length = 62;
-giant_tube_length = 26;
+giant_tube_length = 47;
 logo_depth = 0.8;
 
 /* [Подставка] */
@@ -42,8 +42,8 @@ base_taper = 3;
 wheel_diameter = 62;
 wheelbase = 93;
 frame_thickness = 8;
-down_tube_width = 7.5;
-down_tube_top_width = 6;
+down_tube_width = 11.25;
+down_tube_top_width = 9;
 wheel_overlap = 2;
 // Насколько рама заходит на колесо — так перья с ним срастаются.
 
