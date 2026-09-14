@@ -51,10 +51,14 @@ chain_spine = 26;
 chain_thickness = 6;
 chain_tail = 6;
 chain_engrave = 0.6;
-// Гравировка по середине спинки: гонка и партнёр. Эмблемы команды тут нет —
-// в ней много мелких деталей, и на печати она разбирается в кашу.
+// Гравировка на спинке: гонка, под ней участник, справа партнёр. Эмблемы
+// команды тут нет — в ней много мелких деталей, и на печати она в кашу.
+// Верхняя строка поднята к самой кромке, чтобы второй досталось больше
+// места; шире неё вторая всё равно не станет — справа стоит партнёр.
 chain_text_size = 7.1;
-chain_text_at = [52.1, 0];
+chain_text_at = [52.1, 6.9];
+chain_role_size = 6.4;
+chain_role_at = [52.1, -4.8];
 chain_giant_at = [123.7, 0];
 chain_giant_width = 27;
 // Проценты стоят у своих щупов, каждый со своей стороны спинки.
@@ -130,6 +134,7 @@ module chain_wear_indicator() {
         }
         translate([0, 0, chain_thickness - chain_engrave]) {
             translate(chain_text_at) engraved_text(title_line, chain_text_size);
+            translate(chain_role_at) engraved_text(role_line, chain_role_size);
             translate(chain_giant_at) giant_logo(chain_giant_width);
             for (index = [0 : len(chain_marks) - 1]) {
                 side = index == 0 ? 1 : -1;
