@@ -17,28 +17,24 @@
 part = "key"; // [key, jockey]
 
 /* [Надписи] */
-title_line = "UBT TT · 04.10.2026";
-role_line = "Участник · Қатысушы";
+// Эмблемы команды на лице больше нет: в ней много мелких деталей, и на
+// печати она разбиралась в кашу. Вместо неё четыре строки крупным кеглем
+// и логотип партнёра. Размеры подобраны перебором: всё максимально
+// крупное, что влезает в круг с отступом 2 мм от кромки, мимо отверстия
+// под ленту и мимо прорези скребка, с зазорами 0.8 мм между строками.
+face_line = ["UBT TT", "04.10.2026", "Участник", "Қатысушы"];
+face_y = [12.2, 4.1, -4.0, -12.1];
 font_name = "DejaVu Sans:style=Bold";
-logo_file = "ubt-logo.svg";
 giant_file = "giant-logo.svg";
-// Ширина обоих контуров в файлах — 100 единиц, высота у каждого своя.
-logo_source_height = 116.1;
+// Ширина контура в файле — 100 единиц.
 giant_source_width = 99.81;
 
 // Гравировка ложится на первый слой, а он при печати расплющивается:
 // мелкие буквы заплывают. Поэтому шрифт крупный, а глубина — миллиметр.
-// Размеры подобраны перебором: всё максимально крупное, что влезает в круг
-// с отступом 2 мм от кромки и зазорами 1.5 мм между элементами.
-text_size = 3.3;
-title_extra = 0.3;
-logo_y = 16.9;
-title_y = 3.2;
-role_y = -3.0;
-giant_y = -11.1;
+text_size = 5.4;
 engrave_depth = 1.0;
-logo_height = 19.5;
-giant_width = 46;
+giant_y = -19.1;
+giant_width = 26.5;
 
 /* [Медаль] */
 medal_diameter = 60;
@@ -46,8 +42,6 @@ medal_thickness = 5;
 edge_chamfer = 0.7;
 lanyard_hole = 4;
 lanyard_margin = 5;
-
-mark_size = 2.2;
 
 /* [Ключ крышки шатуна] */
 // Крышка натяга Hollowtech II имеет ВНУТРЕННИЕ шлицы, поэтому ключ — это
@@ -79,8 +73,8 @@ jockey_notch_gap = 5.5;
 // переключателя не подлезть.
 jockey_edge_thickness = 1.6;
 jockey_edge_reach = 13;
-// Прорезь уводим на свободную диагональ: сверху она развалила бы эмблему,
-// а по горизонтали перерезала бы строки.
+// Прорезь уводим на свободную диагональ: по горизонтали она перерезала бы
+// строки, а снизу — логотип партнёра.
 jockey_direction = 135;
 // Подпись на трёх языках. Казахскую строку должен вычитать носитель.
 jockey_line = ["JOCKEY SCRAPER", "Очиститель ролика", "Ролик тазалағышы"];
@@ -125,15 +119,8 @@ module engraved_text(line, size, y) {
             text(line, font = font_name, size = size, halign = "center", valign = "center");
 }
 
-// Логотипы на медали мелкие, и полная гранёность контуров раздувала бы STL
+// Логотип партнёра мелкий, и полная гранёность контура раздувала бы STL
 // до десятка мегабайт — на столе их лежит два десятка разом.
-module ubt_logo(height) {
-    $fn = 12;
-    linear_extrude(height = engrave_depth * 2, center = true)
-        scale(height / logo_source_height)
-            import(logo_file, center = true);
-}
-
 module giant_logo(width) {
     $fn = 12;
     linear_extrude(height = engrave_depth * 2, center = true)
@@ -141,20 +128,19 @@ module giant_logo(width) {
             import(giant_file, center = true);
 }
 
-// Медальная раскладка сверху вниз: эмблема команды, гонка, кого награждаем,
-// партнёр. С эмблемы начинать правильнее, а строки уходят ближе к середине,
-// где хорда длиннее — там они не упираются в кромку и набраны крупнее.
+// Медальная раскладка сверху вниз: гонка, дата, кого награждаем на двух
+// языках, партнёр. Строки идут хордами, поэтому длинные стоят ближе
+// к середине, где хорда длиннее.
 module face_engraving() {
     face_plate() {
-        translate([0, logo_y, 0]) ubt_logo(logo_height);
-        engraved_text(title_line, text_size + title_extra, title_y);
-        engraved_text(role_line, text_size, role_y);
+        for (index = [0 : len(face_line) - 1])
+            engraved_text(face_line[index], text_size, face_y[index]);
         translate([0, giant_y, 0]) giant_logo(giant_width);
     }
 }
 
-// Отверстие уводим к плечу медали: по горизонтали оно упиралось бы в строки,
-// а сверху — в эмблему.
+// Отверстие уводим к плечу медали: по горизонтали и сверху оно упиралось
+// бы в строки, а на диагонали для него остаётся место.
 module lanyard() {
     offset = medal_diameter / 2 - lanyard_margin;
     translate([offset * cos(45), offset * sin(45), -1])
@@ -238,20 +224,6 @@ module jockey_medal() {
             ])
                 linear_extrude(height = engrave_depth * 2)
                     text(jockey_line[index], font = font_name, size = jockey_label_size,
-                         halign = "center", valign = "center");
-    }
-}
-
-module whistle_medal(chamber_diameter, chamber_height, line) {
-    difference() {
-        medal_blank();
-        face_engraving();
-        lanyard();
-        whistle_void(chamber_diameter, chamber_height);
-        for (index = [0 : len(line) - 1])
-            translate([0, 17 - index * 3.4, medal_thickness - engrave_depth])
-                linear_extrude(height = engrave_depth * 2)
-                    text(line[index], font = font_name, size = mark_size,
                          halign = "center", valign = "center");
     }
 }

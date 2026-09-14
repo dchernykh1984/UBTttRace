@@ -21,8 +21,13 @@ from ubt_race_docs.trophies import (
     scad_string,
 )
 
-ASCENT = 0.7598
-"""Доля em, по которой OpenSCAD отмеряет `size` у текста в DejaVu."""
+ASCENT = 0.72
+"""Доля em, по которой OpenSCAD отмеряет `size` у текста в DejaVu.
+
+Цифра нарочно занижена: по textmetrics самого OpenSCAD отношение лежит
+между 0.726 и 0.741 в зависимости от строки, а так оценка ширины всегда
+получается с запасом.
+"""
 
 METRICS_SLOP = 1.06
 """Запас: метрики openscad и reportlab совпадают не до последней десятой."""
