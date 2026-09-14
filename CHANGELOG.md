@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.2](https://github.com/dchernykh1984/UBTttRace/compare/v0.18.1...v0.18.2) (2026-09-14)
+
+
+### Исправления
+
+* name the participant on the chain wear indicator ([b5dcc2a](https://github.com/dchernykh1984/UBTttRace/commit/b5dcc2a62675feee8b105f2445acbd96948f9a7b))
+
 ## [0.18.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.18.0...v0.18.1) (2026-09-14)
 
 
