@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.3](https://github.com/dchernykh1984/UBTttRace/compare/v0.18.2...v0.18.3) (2026-09-14)
+
+
+### Исправления
+
+* print the trophy bike right side down ([08fc04d](https://github.com/dchernykh1984/UBTttRace/commit/08fc04df3d4abf337f89e3a5c88d7737962faf55))
+
 ## [0.18.2](https://github.com/dchernykh1984/UBTttRace/compare/v0.18.1...v0.18.2) (2026-09-14)
 
 
