@@ -36,8 +36,9 @@ def test_model_handles_every_kind_we_ask_for() -> None:
         assert f'part == "{kind}"' in source, f"модель не знает исполнения {kind}"
 
 
-def test_medal_is_a_fifty_millimetre_disc() -> None:
-    assert model_number("medal_diameter") == 50
+def test_medal_is_a_sixty_millimetre_disc() -> None:
+    # Полсотни оказалось мало: на печати гравировка почти не читалась.
+    assert model_number("medal_diameter") == 60
     assert model_number("medal_thickness") == 5
 
 
@@ -46,6 +47,12 @@ def model_string(name: str) -> str:
     match = re.search(rf'^{name} = "(.*)";', MODEL_PATH.read_text(encoding="utf-8"), re.M)
     assert match is not None, f"в модели нет параметра {name}"
     return match.group(1)
+
+
+def test_engraving_is_deep_enough_to_read_after_printing() -> None:
+    # Первый слой расплющивается, и мелкая гравировка заплывает.
+    assert model_number("engrave_depth") >= 0.8
+    assert model_number("text_size") >= 3.0
 
 
 def test_engraved_lines_fit_inside_the_rim() -> None:
@@ -134,24 +141,6 @@ def test_face_elements_do_not_overlap() -> None:
     assert logo_bottom > title_top, "эмблема налезает на строку гонки"
     assert title_bottom > role_top, "строки налезают друг на друга"
     assert abs(model_number("giant_y")) + 3 < radius - 2
-
-
-def test_two_whistles_differ_in_pitch() -> None:
-    # Камера меньше — тон выше: собачий свисток пронзительнее обычного.
-    assert model_number("dog_chamber_diameter") < model_number("whistle_chamber_diameter")
-
-
-def test_whistle_cavity_stays_inside_the_medal() -> None:
-    wall = model_number("whistle_wall")
-    chamber = model_number("whistle_chamber_height")
-    assert wall + chamber < model_number("medal_thickness"), "камера пробила бы медаль"
-    assert model_number("whistle_chamber_diameter") < model_number("medal_diameter") / 2
-
-
-def test_whistle_channel_is_printable_without_supports() -> None:
-    # Канал перекрывается мостом: шире 6 мм он бы провис.
-    assert model_number("whistle_channel_width") <= 6
-    assert model_number("whistle_channel_height") >= 0.8, "тоньше не продуется"
 
 
 def test_lanyard_hole_does_not_break_the_rim() -> None:

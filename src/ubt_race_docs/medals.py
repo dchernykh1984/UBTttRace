@@ -6,8 +6,6 @@
 * `key` — ключ крышки натяга Shimano Hollowtech II: шлицевой выступ,
   за медаль держатся как за рукоятку;
 * `jockey` — скребок ролика заднего переключателя: прорезь по кромке;
-* `whistle` — свисток;
-* `dog-whistle` — свисток повыше тоном, чтобы отогнать собаку.
 
 Здесь только план нарезки: геометрия живёт в `assets/models/medal.scad`,
 а запуск openscad общий с кубками — см. `trophies.py`.
@@ -24,8 +22,6 @@ MODEL_PATH = Path(__file__).parent / "assets" / "models" / "medal.scad"
 KINDS: tuple[tuple[str, str], ...] = (
     ("key", "Ключ крышки натяга Shimano Hollowtech II"),
     ("jockey", "Скребок ролика заднего переключателя"),
-    ("whistle", "Свисток"),
-    ("dog-whistle", "Свисток повыше тоном, чтобы отогнать собаку"),
 )
 
 
