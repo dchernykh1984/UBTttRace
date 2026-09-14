@@ -82,10 +82,13 @@ jockey_edge_reach = 13;
 // Прорезь уводим на свободную диагональ: сверху она развалила бы эмблему,
 // а по горизонтали перерезала бы строки.
 jockey_direction = 135;
-jockey_line = ["JOCKEY", "SCRAPER"];
+// Подпись на трёх языках. Казахскую строку должен вычитать носитель.
+jockey_line = ["JOCKEY SCRAPER", "Очиститель ролика", "Ролик тазалағышы"];
+jockey_label_size = 3.7;
+jockey_label_step = 6.2;
 // Подпись уходит на целую половину медали: на сточенной кромке под ней
 // остаётся полтора миллиметра, и буквы проваливаются в прорезь.
-jockey_label_radius = 13;
+jockey_label_radius = 8.7;
 
 $fn = 64;
 
@@ -230,11 +233,11 @@ module jockey_medal() {
         for (index = [0 : len(jockey_line) - 1])
             translate([
                 0,
-                jockey_label_radius - index * 3.4,
+                jockey_label_radius - index * jockey_label_step,
                 medal_thickness - engrave_depth,
             ])
                 linear_extrude(height = engrave_depth * 2)
-                    text(jockey_line[index], font = font_name, size = mark_size,
+                    text(jockey_line[index], font = font_name, size = jockey_label_size,
                          halign = "center", valign = "center");
     }
 }
