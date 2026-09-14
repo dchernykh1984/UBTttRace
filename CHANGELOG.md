@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.18.0...v0.18.1) (2026-09-14)
+
+
+### Исправления
+
+* enlarge the logos on the trophy bike ([204d001](https://github.com/dchernykh1984/UBTttRace/commit/204d0012e2417775990fa699a3ceff3795d96c5b))
+
 ## [0.18.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.17.1...v0.18.0) (2026-09-14)
 
 
