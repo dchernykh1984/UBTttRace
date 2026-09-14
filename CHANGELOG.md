@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.17.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.16.2...v0.17.0) (2026-09-14)
+
+
+### Новое
+
+* drop the whistle medals and grow the disc to 60 mm ([712289e](https://github.com/dchernykh1984/UBTttRace/commit/712289e154cf38ee69727e7dfbfc8300773a7eae))
+* knurl the key medal rim for grip ([6ae5d08](https://github.com/dchernykh1984/UBTttRace/commit/6ae5d082f7fe5a49e4895d997575ca1529a8690c))
+
+
+### Исправления
+
+* align the cassette engraving to the tool centre line ([ce97787](https://github.com/dchernykh1984/UBTttRace/commit/ce977874608d1b387fc38313c83623a73ec42579))
+
 ## [0.16.2](https://github.com/dchernykh1984/UBTttRace/compare/v0.16.1...v0.16.2) (2026-09-13)
 
 
