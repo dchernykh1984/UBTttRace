@@ -116,6 +116,19 @@ def test_key_driver_sticks_out_of_the_medal() -> None:
     assert model_number("cap_lead_in") > 0, "без заходной фаски ключ не наденется"
 
 
+def test_key_rim_is_knurled_for_grip() -> None:
+    # Медалью крутят крышку, поэтому кромка рифлёная — шаг взят у заводского
+    # ключа: 33 ребра на диаметре 40 мм, то есть примерно 3.8 мм по дуге.
+    import math
+
+    teeth = model_number("knurl_teeth")
+    step = math.pi * model_number("medal_diameter") / teeth
+    assert 3.0 < step < 4.6, f"шаг рифления {step:.1f} мм не похож на заводской"
+    depth = model_number("knurl_depth")
+    assert 0.4 < depth < 1.2, "слишком мелкое или слишком грубое рифление"
+    assert depth < model_number("knurl_groove"), "канавка глубже своей ширины"
+
+
 def test_key_teeth_are_wide_with_round_grooves() -> None:
     # У заводского ключа зубцы широкие, а впадины между ними узкие
     # и круглые — строим их вычитанием цилиндров, а не наращиванием.

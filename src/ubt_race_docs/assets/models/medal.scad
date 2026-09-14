@@ -57,6 +57,11 @@ cap_groove_width = 3.8;
 cap_groove_depth = 1.5;
 cap_driver_height = 8;
 cap_lead_in = 0.8;
+// Рифление по кромке: за медаль держатся пальцами и крутят ею крышку.
+// Шаг взят у заводского ключа — там 33 ребра на диаметре 40 мм.
+knurl_teeth = 50;
+knurl_groove = 2.0;
+knurl_depth = 0.7;
 
 /* [Скребок ролика] */
 // Прорезь по кромке медали: в неё входит зуб ролика, стенки счищают грязь
@@ -162,12 +167,21 @@ module cap_driver() {
         }
 }
 
+module knurled_rim() {
+    radius = medal_diameter / 2;
+    for (index = [0 : knurl_teeth - 1])
+        rotate([0, 0, index * 360 / knurl_teeth])
+            translate([0, radius + knurl_groove / 2 - knurl_depth, -1])
+                cylinder(d = knurl_groove, h = medal_thickness + 2, $fn = 16);
+}
+
 module key_medal() {
     difference() {
         union() {
             medal_blank();
             cap_driver();
         }
+        knurled_rim();
         face_engraving();
         lanyard();
     }
