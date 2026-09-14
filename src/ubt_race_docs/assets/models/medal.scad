@@ -28,14 +28,17 @@ giant_source_width = 99.81;
 
 // Гравировка ложится на первый слой, а он при печати расплющивается:
 // мелкие буквы заплывают. Поэтому шрифт крупный, а глубина — миллиметр.
-text_size = 3.2;
-logo_y = 17.5;
-title_y = 6;
-role_y = -1;
-giant_y = -11;
+// Размеры подобраны перебором: всё максимально крупное, что влезает в круг
+// с отступом 2 мм от кромки и зазорами 1.5 мм между элементами.
+text_size = 3.3;
+title_extra = 0.3;
+logo_y = 16.9;
+title_y = 3.2;
+role_y = -3.0;
+giant_y = -11.1;
 engrave_depth = 1.0;
-logo_height = 17;
-giant_width = 30;
+logo_height = 19.5;
+giant_width = 46;
 
 /* [Медаль] */
 medal_diameter = 60;
@@ -87,6 +90,16 @@ jockey_label_radius = 13;
 $fn = 64;
 
 
+// Рифление по кромке — только у ключа: этой медалью крутят крышку шатуна,
+// и пальцы не должны проскальзывать. Шаг взят у заводского инструмента.
+module knurled_rim() {
+    radius = medal_diameter / 2;
+    for (index = [0 : knurl_teeth - 1])
+        rotate([0, 0, index * 360 / knurl_teeth])
+            translate([0, radius + knurl_groove / 2 - knurl_depth, -1])
+                cylinder(d = knurl_groove, h = medal_thickness + 2, $fn = 16);
+}
+
 module medal_blank() {
     radius = medal_diameter / 2;
     // Фаска с обеих сторон: и в руке приятнее, и первый слой не заваливается.
@@ -131,7 +144,7 @@ module giant_logo(width) {
 module face_engraving() {
     face_plate() {
         translate([0, logo_y, 0]) ubt_logo(logo_height);
-        engraved_text(title_line, text_size + 0.2, title_y);
+        engraved_text(title_line, text_size + title_extra, title_y);
         engraved_text(role_line, text_size, role_y);
         translate([0, giant_y, 0]) giant_logo(giant_width);
     }
@@ -165,14 +178,6 @@ module cap_driver() {
             // заходное сужение: без него ключ приходится ловить вслепую
             cylinder(d1 = outer + 2, d2 = outer - 2 * cap_lead_in, h = cap_driver_height);
         }
-}
-
-module knurled_rim() {
-    radius = medal_diameter / 2;
-    for (index = [0 : knurl_teeth - 1])
-        rotate([0, 0, index * 360 / knurl_teeth])
-            translate([0, radius + knurl_groove / 2 - knurl_depth, -1])
-                cylinder(d = knurl_groove, h = medal_thickness + 2, $fn = 16);
 }
 
 module key_medal() {

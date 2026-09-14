@@ -59,10 +59,13 @@ def test_engraved_lines_fit_inside_the_rim() -> None:
     # Надписи идут прямыми строками по хорде: за краем диска они бы обрезались.
     radius = model_number("medal_diameter") / 2
     size = model_number("text_size")
-    for name, y_name in (("title_line", "title_y"), ("role_line", "role_y")):
+    for name, y_name, extra in (
+        ("title_line", "title_y", model_number("title_extra")),
+        ("role_line", "role_y", 0.0),
+    ):
         line = model_string(name)
         y = model_number(y_name)
-        width = text_width(line, SANS_BOLD, size / ASCENT)
+        width = text_width(line, SANS_BOLD, (size + extra) / ASCENT)
         chord = 2 * math.sqrt(radius**2 - y**2)
         assert width < chord - 4, f"«{line}» шире хорды: {width:.1f} против {chord:.1f} мм"
 
@@ -139,6 +142,24 @@ def test_key_teeth_are_wide_with_round_grooves() -> None:
     assert groove_arc < tooth_arc, "впадина шире зуба — профиль вывернут наизнанку"
     # Впадины у заводского ключа мелкие: глубокие срезали бы зубцы крышки.
     assert model_number("cap_groove_depth") < model_number("cap_outer_diameter") / 10
+
+
+def test_face_is_packed_without_wasted_space() -> None:
+    # Свободное место на медали кончилось: между элементами не больше двух
+    # миллиметров, иначе всё можно было сделать крупнее.
+    size = model_number("text_size")
+    logo_bottom = model_number("logo_y") - model_number("logo_height") / 2
+    title_top = model_number("title_y") + (size + model_number("title_extra")) * 1.35 / 2
+    title_bottom = model_number("title_y") - (size + model_number("title_extra")) * 1.35 / 2
+    role_top = model_number("role_y") + size * 1.35 / 2
+    role_bottom = model_number("role_y") - size * 1.35 / 2
+    giant_top = model_number("giant_y") + model_number("giant_width") * 308 / 1600 / 2
+    for label, gap in (
+        ("эмблема и гонка", logo_bottom - title_top),
+        ("гонка и участник", title_bottom - role_top),
+        ("участник и партнёр", role_bottom - giant_top),
+    ):
+        assert 0.5 < gap < 2.5, f"{label}: зазор {gap:.1f} мм"
 
 
 def test_face_elements_do_not_overlap() -> None:
