@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.18.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.17.1...v0.18.0) (2026-09-14)
+
+
+### Новое
+
+* draw our own chain wear indicator instead of the bought one ([0979ec2](https://github.com/dchernykh1984/UBTttRace/commit/0979ec2a5405a5f8b4e1554ff9b4877c4ef8fbbf))
+* label the scraper medal in three languages ([e904f39](https://github.com/dchernykh1984/UBTttRace/commit/e904f393dc4f08cc64579d8ff4a3b2c1e9e8e1c7))
+
+
+### Исправления
+
+* drop the team emblem from the medal and set the type larger ([a60d32a](https://github.com/dchernykh1984/UBTttRace/commit/a60d32a9fd7b5017c95e3773c3dbdd6b9cc6c8bb))
+
 ## [0.17.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.17.0...v0.17.1) (2026-09-14)
 
 
