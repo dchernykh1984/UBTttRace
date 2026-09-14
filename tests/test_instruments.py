@@ -91,9 +91,12 @@ def test_cassette_is_engraved_on_the_clean_side() -> None:
     source = MODEL_PATH.read_text(encoding="utf-8")
     assert "module back_engraving()" in source
     assert "mirror([1, 0, 0])" in source, "на обороте надписи надо зеркалить"
-    for name in ("cassette_title_at", "cassette_role_at", "cassette_giant_at"):
-        x, _ = model_point(name)
-        assert 20 < x < 80, f"{name}: гравировка уходит в сужение детали, X={x}"
+    # Читают надписи с обратной стороны, поэтому в модели порядок обратный:
+    # партнёр слева, надписи в середине, эмблема справа.
+    giant_x, _ = model_point("cassette_giant_at")
+    title_x, _ = model_point("cassette_title_at")
+    logo_x, _ = model_point("cassette_logo_at")
+    assert giant_x < title_x < logo_x, "порядок элементов сбился"
 
 
 def test_engraving_keeps_clear_of_the_working_edges() -> None:

@@ -44,15 +44,19 @@ chain_giant_width = 22;
 cassette_file = "vendor/cassette-cleaner.stl";
 cassette_thickness = 4;
 cassette_engrave = 0.5;
-// Тот же порядок, что и на планке измерителя: эмблема, надписи, партнёр —
-// в одну линию вдоль детали.
+// Тот же порядок, что и на планке измерителя: эмблема, надписи, партнёр.
+// Деталь сужается наискось, её середина уходит вниз на 8.4°, поэтому
+// элементы стоят не на одной высоте, а каждый по своей середине — и весь
+// блок повёрнут вдоль детали. Читается блок с обратной стороны, поэтому
+// в модели порядок обратный: партнёр слева, эмблема справа.
 cassette_text_size = 2.5;
-cassette_logo_at = [14, -3];
-cassette_logo_height = 9;
-cassette_title_at = [42, -1];
-cassette_role_at = [42, -6.5];
-cassette_giant_at = [72, -4];
+cassette_angle = -8.4;
+cassette_giant_at = [11, -0.8];
 cassette_giant_width = 12;
+cassette_title_at = [42, -0.5];
+cassette_role_at = [42, -5.5];
+cassette_logo_at = [72, -9.5];
+cassette_logo_height = 9;
 
 $fn = 48;
 
@@ -98,16 +102,16 @@ module back_engraving() {
 module cassette_cleaner() {
     difference() {
         import(cassette_file);
-        translate(cassette_logo_at) back_engraving()
+        translate(cassette_logo_at) rotate([0, 0, cassette_angle]) back_engraving()
             mirror([1, 0, 0]) scale(cassette_logo_height / logo_source_height)
                 import(logo_file, center = true, $fn = 12);
-        translate(cassette_title_at) back_engraving()
+        translate(cassette_title_at) rotate([0, 0, cassette_angle]) back_engraving()
             mirror([1, 0, 0]) text(title_line, font = font_name, size = cassette_text_size,
                                    halign = "center", valign = "center");
-        translate(cassette_role_at) back_engraving()
+        translate(cassette_role_at) rotate([0, 0, cassette_angle]) back_engraving()
             mirror([1, 0, 0]) text(role_line, font = font_name, size = cassette_text_size,
                                    halign = "center", valign = "center");
-        translate(cassette_giant_at) back_engraving()
+        translate(cassette_giant_at) rotate([0, 0, cassette_angle]) back_engraving()
             mirror([1, 0, 0]) scale(cassette_giant_width / giant_source_width)
                 import(giant_file, center = true, $fn = 12);
     }
