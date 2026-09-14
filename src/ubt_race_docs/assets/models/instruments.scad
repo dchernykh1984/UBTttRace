@@ -49,14 +49,14 @@ cassette_engrave = 0.5;
 // элементы стоят не на одной высоте, а каждый по своей середине — и весь
 // блок повёрнут вдоль детали. Читается блок с обратной стороны, поэтому
 // в модели порядок обратный: партнёр слева, эмблема справа.
-cassette_text_size = 2.5;
+cassette_text_size = 3.0;
 cassette_angle = -8.4;
-cassette_giant_at = [11, -0.8];
-cassette_giant_width = 12;
-cassette_title_at = [42, -0.5];
-cassette_role_at = [42, -5.5];
-cassette_logo_at = [72, -9.5];
-cassette_logo_height = 9;
+cassette_giant_at = [12, -1.0];
+cassette_giant_width = 18;
+cassette_title_at = [50, -2.5];
+cassette_role_at = [50, -7.5];
+cassette_logo_at = [82.5, -12];
+cassette_logo_height = 10;
 
 $fn = 48;
 
