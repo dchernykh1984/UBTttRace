@@ -169,3 +169,28 @@ def test_cassette_engraving_keeps_its_distance() -> None:
         gap = margin(box, segments)
         assert gap > MIN_MARGIN, f"{label}: до кромки всего {gap:.1f} мм"
     no_overlaps(boxes)
+
+
+def centre_of(segments: list[Segment], x: float) -> float:
+    """Середина детали по высоте в сечении `x`."""
+    heights = []
+    for (ax, ay), (bx, by) in segments:
+        if ax != bx and (ax - x) * (bx - x) <= 0:
+            heights.append(ay + (x - ax) / (bx - ax) * (by - ay))
+    assert heights, f"в сечении X={x} нет детали"
+    return (min(heights) + max(heights)) / 2
+
+
+def test_cassette_engraving_follows_the_centre_line() -> None:
+    # Деталь сужается наискось: одинаковый Y у всех элементов означал бы,
+    # что один жмётся к верхней кромке, другой к нижней.
+    segments = outline(VENDOR_DIR / "cassette-cleaner.stl", 0.2)
+    for name in ("cassette_logo_at", "cassette_giant_at"):
+        x, y = point(name)
+        drift = abs(y - centre_of(segments, x))
+        assert drift < 1.5, f"{name}: сидит на {drift:.1f} мм в стороне от середины"
+    # Надписи идут парой вокруг середины.
+    title_x, title_y = point("cassette_title_at")
+    _, role_y = point("cassette_role_at")
+    middle = centre_of(segments, title_x)
+    assert abs((title_y + role_y) / 2 - middle) < 1.5, "пара строк съехала с середины"
