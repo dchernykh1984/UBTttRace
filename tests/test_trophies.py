@@ -142,6 +142,14 @@ def test_logo_is_traced_next_to_the_model() -> None:
     assert "<svg" in logo.read_text(encoding="utf-8")
 
 
+WHEEL_LOGO_RADIUS = 0.5344
+"""Радиус эмблемы от её центра в долях высоты.
+
+Габарит у эмблемы прямоугольный, а сама она почти круглая, поэтому по углам
+габарита места остаётся больше, чем кажется. Цифра снята с контура: при
+высоте 46 мм самая дальняя точка лежит в 24.58 мм от центра.
+"""
+
 LOGO_SOURCE_WIDTH = 99.95
 """Ширина контура в `ubt-logo.svg`: с ней он импортируется в OpenSCAD."""
 
@@ -163,9 +171,13 @@ def test_logo_fits_the_side_of_the_plinth() -> None:
 
 def test_logo_fits_the_rear_disc() -> None:
     # На колесе логотип виден лучше всего, но должен остаться в пределах диска.
-    diameter = model_number("wheel_diameter")
-    assert model_number("wheel_logo_height") < diameter
-    assert logo_width("wheel_logo_height") < diameter
+    # Меряем не габарит, а сам контур: эмблема почти круглая и вписана
+    # в диск, поэтому важен её радиус от центра, а не угол габарита.
+    radius = model_number("wheel_diameter") / 2
+    reach = model_number("wheel_logo_height") * WHEEL_LOGO_RADIUS
+    margin = radius - reach
+    assert margin > 0.8, f"эмблема подходит к ободу на {margin:.2f} мм"
+    assert margin < 3.0, f"на колесе осталось {margin:.1f} мм — эмблему можно крупнее"
 
 
 def test_wheel_engraving_does_not_pierce_the_disc() -> None:
@@ -242,10 +254,77 @@ def test_partner_logo_fits_the_back_of_the_plinth() -> None:
     assert height < model_number("base_height")
 
 
-def test_partner_logo_fits_the_down_tube() -> None:
-    # Логотип лежит вдоль нижней трубы и не должен вылезать за её края.
-    height = model_number("giant_tube_length") / GIANT_SOURCE_WIDTH * GIANT_SOURCE_HEIGHT
-    assert height < model_number("down_tube_top_width")
+PARTNER_PROFILE = ((0.0, 0.15, 0.0963), (0.22, 1.0, 0.0490))
+"""Полувысота логотипа партнёра в долях его длины по участкам.
+
+Логотип неоднороден: слева знак в полную высоту, дальше надпись «GIANT»
+вдвое ниже. Мерить по общему габариту бессмысленно — рама под ним узкая
+и наклонная. Цифры сняты с контура.
+"""
+
+FRAME_TUBES = (
+    ("нижняя труба", "bottom_bracket", "down_tube_top", "down_tube_width", "down_tube_top_width"),
+    # Ширины подседельной, верхней и рулевой стоят в `frame()` числами.
+    ("подседельная", "bottom_bracket", "seat_top", 11.0, 9.0),
+    ("верхняя труба", "seat_top", "head_top", 6.0, 5.0),
+    ("рулевая", "head_top", "head_bottom", 6.5, 6.5),
+)
+
+
+def model_vector(name: str) -> tuple[float, float]:
+    """Точка `[x, y]` из модели."""
+    match = re.search(
+        rf"^{name} = \[(-?[0-9.]+), *(-?[0-9.]+)\];",
+        MODEL_PATH.read_text(encoding="utf-8"),
+        re.M,
+    )
+    assert match is not None, f"в модели нет параметра {name}"
+    return float(match.group(1)), float(match.group(2))
+
+
+def frame_depth(point: tuple[float, float]) -> float:
+    """Насколько глубоко точка сидит в раме: расстояние до ближайшей кромки.
+
+    Считаем по трубам: каждая — это отрезок с шириной, меняющейся по длине.
+    Берём лучшую из труб, поэтому на стыках оценка выходит осторожной.
+    """
+    best = -math.inf
+    for _, first, second, w1, w2 in FRAME_TUBES:
+        start, end = model_vector(first), model_vector(second)
+        width1 = w1 if isinstance(w1, float) else model_number(w1)
+        width2 = w2 if isinstance(w2, float) else model_number(w2)
+        span = math.dist(start, end)
+        axis = ((end[0] - start[0]) / span, (end[1] - start[1]) / span)
+        offset = (point[0] - start[0], point[1] - start[1])
+        along = min(span, max(0.0, offset[0] * axis[0] + offset[1] * axis[1]))
+        foot = (start[0] + along * axis[0], start[1] + along * axis[1])
+        half = (width1 + (width2 - width1) * along / span) / 2
+        best = max(best, half - math.dist(point, foot))
+    # каретка — круг радиусом 8 вокруг своей точки
+    return max(best, 8 - math.dist(point, model_vector("bottom_bracket")))
+
+
+def test_partner_logo_stays_on_the_frame() -> None:
+    # Логотип лежит вдоль нижней трубы по её середине. Заезжать на каретку
+    # и подседельную ему можно, а вот вылезать за силуэт рамы — нет.
+    start, end = model_vector("bottom_bracket"), model_vector("down_tube_top")
+    span = math.dist(start, end)
+    axis = ((end[0] - start[0]) / span, (end[1] - start[1]) / span)
+    length = model_number("giant_tube_length")
+    worst = min(
+        frame_depth(
+            (
+                start[0] + at * axis[0] - side * half * length * axis[1],
+                start[1] + at * axis[1] + side * half * length * axis[0],
+            )
+        )
+        for first, last, half in PARTNER_PROFILE
+        for edge in (first, last)
+        for at in (span / 2 - length / 2 + edge * length,)
+        for side in (-1, 1)
+    )
+    assert worst > 0.8, f"логотип подходит к кромке рамы на {worst:.2f} мм"
+    assert worst < 2.5, f"до кромки рамы {worst:.1f} мм — логотип можно крупнее"
 
 
 def test_engraving_never_cuts_through_the_frame() -> None:
