@@ -5,8 +5,6 @@
 //                 медаль работает рукояткой;
 //   jockey      — скребок ролика заднего переключателя: прорезь по кромке,
 //                 в неё заходит зуб ролика и очищается с обеих сторон;
-//   whistle     — свисток;
-//   dog-whistle — свисток повыше тоном, чтобы отгонять собак.
 //
 // Лицевая сторона у всех одна и та же и лежит ВНИЗУ: медаль печатается
 // гравировкой на стол. Так надписи выходят чёткими (первый слой прижат
@@ -16,7 +14,7 @@
 //   openscad -o medal-key.stl -D 'part="key"' medal.scad
 
 /* [Что печатать] */
-part = "key"; // [key, whistle, dog-whistle, jockey]
+part = "key"; // [key, jockey]
 
 /* [Надписи] */
 title_line = "UBT TT · 04.10.2026";
@@ -28,21 +26,23 @@ giant_file = "giant-logo.svg";
 logo_source_height = 116.1;
 giant_source_width = 99.81;
 
-text_size = 2.4;
-logo_y = 14;
-title_y = 4;
-role_y = -3.5;
-giant_y = -13;
-engrave_depth = 0.6;
-logo_height = 12;
-giant_width = 18;
+// Гравировка ложится на первый слой, а он при печати расплющивается:
+// мелкие буквы заплывают. Поэтому шрифт крупный, а глубина — миллиметр.
+text_size = 3.2;
+logo_y = 17.5;
+title_y = 6;
+role_y = -1;
+giant_y = -11;
+engrave_depth = 1.0;
+logo_height = 17;
+giant_width = 30;
 
 /* [Медаль] */
-medal_diameter = 50;
+medal_diameter = 60;
 medal_thickness = 5;
 edge_chamfer = 0.7;
 lanyard_hole = 4;
-lanyard_margin = 4.5;
+lanyard_margin = 5;
 
 mark_size = 2.2;
 
@@ -78,22 +78,6 @@ jockey_line = ["JOCKEY", "SCRAPER"];
 // Подпись уходит на целую половину медали: на сточенной кромке под ней
 // остаётся полтора миллиметра, и буквы проваливаются в прорезь.
 jockey_label_radius = 13;
-
-/* [Свисток] */
-// Резонатор Гельмгольца: объём камеры и сечение окна задают тон. При этих
-// числах выходит около 7–8 кГц — человеку пронзительно, собаке отлично
-// слышно. Настоящий ультразвук на FDM не выдуть: каналы нужны глаже.
-// Камера побольше звучит ниже и громче, поменьше — пронзительнее.
-whistle_chamber_diameter = 24;
-whistle_chamber_height = 3;
-dog_chamber_diameter = 11;
-dog_chamber_height = 2.6;
-whistle_window = 4.2;
-whistle_channel_height = 1.2;
-whistle_channel_width = 4.2;
-whistle_wall = 1.4;
-whistle_line = ["WHISTLE"];
-dog_line = ["ANTI-DOG", "WHISTLE"];
 
 $fn = 64;
 
@@ -142,7 +126,7 @@ module giant_logo(width) {
 module face_engraving() {
     face_plate() {
         translate([0, logo_y, 0]) ubt_logo(logo_height);
-        engraved_text(title_line, text_size, title_y);
+        engraved_text(title_line, text_size + 0.2, title_y);
         engraved_text(role_line, text_size, role_y);
         translate([0, giant_y, 0]) giant_logo(giant_width);
     }
@@ -187,18 +171,6 @@ module key_medal() {
         face_engraving();
         lanyard();
     }
-}
-
-// Свисток: воздух заходит с кромки узким каналом, разбивается об острую
-// кромку окна и раскачивает закрытую камеру за ним.
-module whistle_void(chamber_diameter, chamber_height) {
-    radius = medal_diameter / 2;
-    z = whistle_wall;
-    translate([-whistle_channel_width / 2, -radius - 1, z])
-        cube([whistle_channel_width, radius - chamber_diameter / 2 + 1, whistle_channel_height]);
-    translate([-whistle_window / 2, -chamber_diameter / 2 - whistle_window, z])
-        cube([whistle_window, whistle_window, medal_thickness]);
-    translate([0, 0, z]) cylinder(d = chamber_diameter, h = chamber_height);
 }
 
 // Сектор кромки, сточенный до рабочей толщины: ступенька смотрит вверх,
@@ -264,8 +236,4 @@ module whistle_medal(chamber_diameter, chamber_height, line) {
 
 if (part == "key") key_medal();
 else if (part == "jockey") jockey_medal();
-else if (part == "whistle")
-    whistle_medal(whistle_chamber_diameter, whistle_chamber_height, whistle_line);
-else if (part == "dog-whistle")
-    whistle_medal(dog_chamber_diameter, dog_chamber_height, dog_line);
-else assert(false, "part должен быть key, jockey, whistle или dog-whistle");
+else assert(false, "part должен быть key или jockey");
