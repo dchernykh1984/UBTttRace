@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.19.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.18.3...v0.19.0) (2026-10-04)
+
+
+### Новое
+
+* add the bike computer case models ([909e4f5](https://github.com/dchernykh1984/UBTttRace/commit/909e4f52732b8a819d4afc11518afe653b336b15))
+* add the tool bottle models ([fdf8046](https://github.com/dchernykh1984/UBTttRace/commit/fdf80463242179986ae45a7599972fcacce97fef))
+* publish the blender models with the release ([89e61a2](https://github.com/dchernykh1984/UBTttRace/commit/89e61a23c270983b267125b104ff62d795dfdfae))
+
+
+### Документация
+
+* describe the bottle and the computer cases ([f2d5cf1](https://github.com/dchernykh1984/UBTttRace/commit/f2d5cf15d4308c35d7ddee56bd6a51c5b2c5473f))
+
 ## [0.18.3](https://github.com/dchernykh1984/UBTttRace/compare/v0.18.2...v0.18.3) (2026-09-14)
 
 
