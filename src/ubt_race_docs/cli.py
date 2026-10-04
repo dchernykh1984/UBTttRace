@@ -6,6 +6,7 @@ ubt-race-docs trophies --out dist
 ubt-race-docs map --out dist
 ubt-race-docs medals --out dist
 ubt-race-docs instruments --out dist
+ubt-race-docs prints --out dist
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ from .bibs import FIRST_BIB, LAST_BIB, build_bibs
 from .certificates import SPARE_CERTIFICATES, build_certificates
 from .instruments import render_all as render_instruments
 from .medals import render_all as render_medals
+from .prints import copy_all as copy_prints
 from .route_map import render as render_map
 from .trophies import render_all
 from .waivers import FORMS, build_waiver
@@ -112,6 +114,8 @@ def _parser() -> argparse.ArgumentParser:
         commands.add_parser("instruments", help="STL брендированных инструментов (нужен openscad)")
     )
 
+    with_output(commands.add_parser("prints", help="STL фляжки-хранилища и чехлов велокомпьютеров"))
+
     everything = with_output(commands.add_parser("all", help="все документы сразу"))
     everything.add_argument("--first", type=int, default=FIRST_BIB, help="первый номер")
     everything.add_argument("--last", type=int, default=LAST_BIB, help="последний номер")
@@ -167,6 +171,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             produced = render_medals(output)
         elif arguments.command == "instruments":
             produced = render_instruments(output)
+        elif arguments.command == "prints":
+            produced = copy_prints(output)
         else:
             produced = build_documents(
                 output,
