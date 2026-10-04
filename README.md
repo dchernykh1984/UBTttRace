@@ -59,6 +59,7 @@ make kit       # то же самое плюс STL кубков (нужен open
 | `make map` | `map.png` — карта трассы в цветах партнёра |
 | `make medals` | `medal-*.stl` — медали участникам (нужен openscad) |
 | `make instruments` | `medal-chain-wear.stl`, `medal-cassette.stl` — медали-инструменты (нужен openscad) |
+| `make prints` | `bottle-*.stl`, `case-garmin-*.stl` — фляжка-хранилище и чехлы велокомпьютеров |
 
 `make clean` удаляет `dist/` и кэши.
 
