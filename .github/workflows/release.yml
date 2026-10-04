@@ -70,6 +70,12 @@ jobs:
         env:
           TAG: ${{ needs.release-please.outputs.tag_name }}
 
+      # Модели из Blender не собираются, а лежат в репозитории готовыми.
+      # Кладём их после упаковки: в zip с документами им делать нечего —
+      # это двести мегабайт, которые качают отдельными файлами и по одному.
+      - name: Add the blender models
+        run: uv run ubt-race-docs prints --out dist
+
       - name: Attach to the release
         run: gh release upload "$TAG" dist/* "ubt-tt-print-kit-${TAG}.zip" --clobber
         env:
