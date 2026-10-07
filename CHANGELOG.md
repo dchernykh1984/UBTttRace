@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.20.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.19.1...v0.20.0) (2026-10-07)
+
+
+### Новое
+
+* cover personal data, filming and third-party harm in the waiver ([14eccb6](https://github.com/dchernykh1984/UBTttRace/commit/14eccb63838028c3978b1429f03e110b22ffd1cf))
+
+
+### Документация
+
+* describe what the waiver covers and where it stops working ([92ee56c](https://github.com/dchernykh1984/UBTttRace/commit/92ee56c891ffea43944d65e91ad0d82267bf025f))
+
 ## [0.19.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.19.0...v0.19.1) (2026-10-07)
 
 
