@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.19.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.19.0...v0.19.1) (2026-10-07)
+
+
+### Исправления
+
+* bottles ([2c14751](https://github.com/dchernykh1984/UBTttRace/commit/2c147519d001bce0b9b80abc1abfe4d23670cfbc))
+
+
+### Документация
+
+* add agents data ([c5c634e](https://github.com/dchernykh1984/UBTttRace/commit/c5c634ed8d8e5770e3ae71426685826f31b58c56))
+
 ## [0.19.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.18.3...v0.19.0) (2026-10-04)
 
 
