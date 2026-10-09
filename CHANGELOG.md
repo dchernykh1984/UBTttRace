@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.20.0...v0.20.1) (2026-10-09)
+
+
+### Исправления
+
+* final bottles 2026 ([fdbafb9](https://github.com/dchernykh1984/UBTttRace/commit/fdbafb95962d854d897d9f27ad2907157116361d))
+
 ## [0.20.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.19.1...v0.20.0) (2026-10-07)
 
 
