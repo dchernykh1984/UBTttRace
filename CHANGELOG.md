@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.21.0](https://github.com/dchernykh1984/UBTttRace/compare/v0.20.1...v0.21.0) (2026-11-04)
+
+
+### Новое
+
+* add the vector ubt logo next to the raster one ([48615c9](https://github.com/dchernykh1984/UBTttRace/commit/48615c9cad9d43e6caca54c25fe3769a21b2b663))
+
+
+### Документация
+
+* describe the vector ubt logo and how it was checked ([7f2cadf](https://github.com/dchernykh1984/UBTttRace/commit/7f2cadf30672a761152e781ce0afb1f4bfd407a0))
+
 ## [0.20.1](https://github.com/dchernykh1984/UBTttRace/compare/v0.20.0...v0.20.1) (2026-10-09)
 
 
