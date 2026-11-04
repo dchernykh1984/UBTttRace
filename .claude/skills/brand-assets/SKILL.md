@@ -10,6 +10,7 @@ description: Логотипы UBT и партнёра Giant — где лежа�
 | Файл | Для чего |
 | --- | --- |
 | `assets/images/ubt-logo.png` | водяной знак грамоты, номера, шапка карты |
+| `assets/images/ubt-logo.svg` | тот же логотип вектором: холст и цвет как у PNG |
 | `assets/images/giant-logo.png` | подвал грамоты, зона обхвата на номере, шапка карты |
 | `assets/models/ubt-logo.svg` | гравировка на кубке |
 | `assets/models/giant-logo.svg` | гравировка на кубке |
