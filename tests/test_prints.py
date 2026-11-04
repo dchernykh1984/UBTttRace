@@ -62,7 +62,8 @@ def test_blender_sources_stay_in_the_repository() -> None:
         blend = model.path.with_suffix(".blend")
         assert blend.is_file(), f"нет рабочего файла {blend.name}"
     blends = {path.name for path in prints_dir().rglob("*.blend")}
-    assert "bottles_modified10.blend" in blends
+    # Имя файла автор меняет от версии к версии, держимся только за папку.
+    assert any((prints_dir() / "bottles").glob("*.blend")), "пропал рабочий файл фляжки"
     # Плюс обмеры приборов, по которым чехлы и рисовались.
     references = {name for name in blends if "reference" in name}
     assert len(references) == 4, f"обмеров приборов должно быть четыре, а их {len(references)}"
